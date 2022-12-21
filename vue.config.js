@@ -1,6 +1,4 @@
 
-
-
 module.exports = {
   lintOnSave: process.env.NODE_ENV !== "production",
   productionSourceMap: false,
@@ -14,21 +12,14 @@ module.exports = {
     open: true,
     hot: true,
     proxy: {
-      "/base": {
+      "/api": {
         //企业门户
-        target: "http://192.168.100.120:1048/webgate",
+        target: "http://192.168.0.187:8084/",
         changeOrigin: true,
         pathRewrite: {
-          "^/base": "/"
+          "^/api": "/"
         }
       },
-      "/webgate": {
-        target: "http://192.168.100.120:1048/webgate",
-        changeOrigin: true,
-        pathRewrite: {
-          "^/webgate": "/"
-        }
-      }
     }
   },
   configureWebpack: {
