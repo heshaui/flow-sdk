@@ -1,10 +1,10 @@
-
+const CompressionPlugin = require('compression-webpack-plugin')
 module.exports = {
   lintOnSave: process.env.NODE_ENV !== "production",
   productionSourceMap: false,
-  assetsDir: "static",
+  // assetsDir: "static",
   parallel: false,
-  publicPath: "./",
+  publicPath: "weihu-flow-sdk/",
   runtimeCompiler: true,
   devServer: {
     host: "localhost",
@@ -25,7 +25,16 @@ module.exports = {
   configureWebpack: {
     output: {
       libraryExport: "default"
-    }
+    },
+    plugins: [
+        new CompressionPlugin({
+            algorithm: 'gzip',
+            test: /\.(js|css)$/, // 匹配文件名
+            threshold: 10240, // 对超过10k的数据压缩
+            deleteOriginalAssets: false, // 不删除源文件
+            minRatio: 0.8 // 压缩比
+        })
+    ]
   },
   css: { extract: false }
 };

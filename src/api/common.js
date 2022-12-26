@@ -118,3 +118,8 @@ export function getTemList(params) {
 export function login(params) {
     return api.post('/login', qs.stringify(params))
 }
+
+// 获取token
+export function getToken(params) {
+    return api.post('/token', params)
+}

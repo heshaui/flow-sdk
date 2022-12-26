@@ -5,13 +5,14 @@
 </template>
 
 <script>
-import flowSDK from '@/flowSdk/index'
+// import flowSDK from '@/flowSdk/index'
+import flowSDK from 'weihu-flow-sdk'
 export default {
   name: 'App',
   mounted () {
     flowSDK.init({
       el: '#jssdk',
-      login: true,
+      authType: 'login',
       username: 'weihu',
       password: '123456',
       closeBtn: false

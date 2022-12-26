@@ -1,11 +1,11 @@
 /* eslint-disable no-unused-vars */
 import Vue from "vue";
-import ElementUI from 'element-ui'
 import './easyFlow/index.css'
 import './easyFlow/reset.scss'
 import main from "./easyFlow/panel.vue"
-import { login } from '@/api/common'
+import { login, getToken } from '@/api/common'
 import Base64 from './easyFlow/base64'
+import ElementUI from 'element-ui'
 Vue.use(ElementUI);
 
 
@@ -19,7 +19,7 @@ class JsSDK {
   }
 
   static onlogin () {
-    if (this.options.login) {
+    if (this.options.authType === 'login') {
       const username = this.options.username
       const password = this.options.password
       const base64 = new Base64()
@@ -33,12 +33,23 @@ class JsSDK {
     }
   }
 
+  static getToken() {
+    if (this.options.authType === 'token') {
+      getToken({
+        accessKeyId : this.options.accessKeyId,
+        accessKeySecret : this.options.accessKeySecret
+      }).then(res => {
+        localStorage.token = res.data.token
+      })
+    }
+  }
+
   static render (options, callback) {
     // 默认options
     if (options === void 0) {
       options = {
         el: "#app",
-        login: false,
+        authType: 'default', // login,token,default
         username: '',
         password: '',
         id: '',
@@ -49,19 +60,22 @@ class JsSDK {
         saveCloseDialog: ()=>{}
       };
     }
-    if (options.login && (!options.username || !options.password)) {
-      throw new Error('请在配置中输入用户名密码')
+    if (options.authType === 'login' && (!options.username || !options.password)) {
+      throw new Error('授权方式为login时，username与password不能为空')
+    } else if (options.authType === 'token' && (!options.accessKeyId || !options.accessKeySecret)) {
+      throw new Error('授权方式为token时，accessKeyId与accessKeySecret不能为空')
     }
     this.options = Object.assign({}, options);
-    options.login && JsSDK.onlogin()
+    options.authType === 'login' && JsSDK.onlogin()
+    options.authType === 'token' && JsSDK.getToken()
     console.log(this.options)
     const el = this.options.el;
     new Vue({
       render: (h) => h(main, { 
         props: this.options,
         on: {
-          closeDetailDialog: this.options.closeDetailDialog ? this.options.closeDetailDialog : '',
-          saveCloseDialog: this.options.saveCloseDialog ? this.options.saveCloseDialog : ''
+          closeDetailDialog: this.options.onClose ? this.options.onClose : '',
+          saveCloseDialog: this.options.onSave ? this.options.onSave : ''
         } 
       }),
       mounted () {
