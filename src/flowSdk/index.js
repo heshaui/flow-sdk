@@ -56,8 +56,8 @@ class JsSDK {
         state: '',
         ivrData: null,
         closeBtn: false,
-        closeDetailDialog: ()=>{},
-        saveCloseDialog: ()=>{}
+        onClose: ()=>{},
+        onSave: ()=>{}
       };
     }
     if (options.authType === 'login' && (!options.username || !options.password)) {

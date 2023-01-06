@@ -119,31 +119,48 @@
         <div v-show="activeName === 'currency'" style="height: calc(100% - 47px); padding: 20px; overflow-y: auto;">
             <el-form ref="flowForm" :model="flowForm" :rules="rules" label-width="180px" label-position="left" class="flowForm">
                 <h3>播放参数</h3>
-                <el-row :gutter="40">
-                    <el-col :span="8">
-                        <el-form-item label="最小打断时常(毫秒)">
-                            <el-input-number v-model="flowForm.minBreakDuration" :min="500" :step="100" style="width: 100%;"/>
-                        </el-form-item>
-                        <el-form-item label="无输入判断时常(毫秒)">
-                            <el-input-number v-model="flowForm.noInputJudgeDuration" :min="500" :step="100" style="width: 100%;"/>
-                        </el-form-item>
-                        <el-form-item label="音色">
-                            <el-select v-model="flowForm.speaker" style="width: 100%;">
-                                <el-option v-for="(v, k) in timbres" :key="k" :label="v.name" :value="v.code" />
-                            </el-select>
-                        </el-form-item>
-                        <el-form-item label="语速" prop="speed">
-                            <el-slider v-model="flowForm.speed" :max="300" :marks="marks"/>
-                        </el-form-item>
-                        <el-form-item label="语调">
-                            <el-input-number v-model="flowForm.intonation" :max="10000" :step="2" style="width: 100%;"/>
-                        </el-form-item>
-                        <el-form-item label="音量" prop="volume">
-                            <el-input-number v-model="flowForm.volume" :min="0" :step="2" style="width: 100%;"/>
-                        </el-form-item>
-                    </el-col>
-                    <el-col :span="8">
-
+                <el-row>
+                    <el-col :span="16">
+                        <el-row :gutter="50">
+                            <el-col :span="12">
+                                <el-form-item label="最小打断时常(毫秒)">
+                                    <el-input-number v-model="flowForm.minBreakDuration" :min="500" :step="100" style="width: 100%;"/>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="12">
+                                <el-form-item label="无输入判断时常(毫秒)">
+                                    <el-input-number v-model="flowForm.noInputJudgeDuration" :min="500" :step="100" style="width: 100%;"/>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="12">
+                                <el-form-item label="音色">
+                                    <el-select v-model="flowForm.speaker" style="width: 100%;">
+                                        <el-option v-for="(v, k) in timbres" :key="k" :label="v.name" :value="v.code" />
+                                    </el-select>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="12">
+                                <el-form-item label="语速" prop="speed">
+                                    <el-slider v-model="flowForm.speed" :max="300" :marks="marks"/>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="12">
+                                <el-form-item label="语调">
+                                    <el-input-number v-model="flowForm.intonation" :max="10000" :step="2" style="width: 100%;"/>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="12">
+                                <el-form-item label="音量" prop="volume">
+                                    <el-input-number v-model="flowForm.volume" :min="0" :step="2" style="width: 100%;"/>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="24">
+                                <el-form-item label="试听内容">
+                                    <el-input v-model="flowForm.auditionContent" type="textarea"  placeholder="最多可输入300个字" :maxlength="300" :rows="3" />
+                                    <AuditionTimbre :params="flowForm" type="ivr" />
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
                     </el-col>
                 </el-row>
             </el-form>
@@ -278,6 +295,7 @@
     import { creatIvr, editIvr } from '@/api/ivrManage'
     import { cloneDeep, findLastIndex, assign, merge } from 'lodash'
     import { getGatewayGroupId, getSkills, getParamType, getTimbre, getTemList } from '@/api/common'
+    import AuditionTimbre from './AuditionTimbre'
     export default {
         props: {
             id: {
@@ -416,7 +434,8 @@
                     // noRespPath: '',
                     // noRespNodeRepeat: 1,
                     // noRespEvent: 0,
-                    params: []
+                    params: [],
+                    auditionContent: '您好，这里是音色试听，您好，这里是音色试听'
                 },
                 rules: {
                     name: [
@@ -482,7 +501,7 @@
         // 一些基础配置移动该文件中
         mixins: [easyFlowMixin],
         components: {
-            draggable, flowNode, nodeMenu, FlowInfo, FlowNodeForm, FlowHelp, ScriptContent
+            draggable, flowNode, nodeMenu, FlowInfo, FlowNodeForm, FlowHelp, ScriptContent, AuditionTimbre
         },
         directives: {
             'flowDrag': {
