@@ -141,23 +141,23 @@
                             </el-col>
                             <el-col :span="12">
                                 <el-form-item label="语速" prop="speed">
-                                    <el-slider v-model="flowForm.speed" :max="300" :marks="marks"/>
+                                    <el-input-number v-model="flowForm.speed" :max="ttsSource === 'ali' ? 500 : 100" :min="ttsSource === 'ali' ? -500 : 0" :placeholder="ttsSource === 'ali' ? '-500～500' : '0～100'" :step="2" style="width: 100%;"/>
                                 </el-form-item>
                             </el-col>
-                            <el-col :span="12">
+                            <el-col v-if="ttsSource === 'ali'" :span="12">
                                 <el-form-item label="语调">
-                                    <el-input-number v-model="flowForm.intonation" :max="10000" :step="2" style="width: 100%;"/>
+                                    <el-input-number v-model="flowForm.intonation" :max="500" :min="-500" :step="2" placeholder="-500~500" style="width: 100%;"/>
                                 </el-form-item>
                             </el-col>
                             <el-col :span="12">
                                 <el-form-item label="音量" prop="volume">
-                                    <el-input-number v-model="flowForm.volume" :min="0" :step="2" style="width: 100%;"/>
+                                    <el-input-number v-model="flowForm.volume" :min="0" :max="100" :step="2" placeholder="0~100" style="width: 100%;"/>
                                 </el-form-item>
                             </el-col>
                             <el-col :span="24">
                                 <el-form-item label="试听内容">
                                     <el-input v-model="flowForm.auditionContent" type="textarea"  placeholder="最多可输入300个字" :maxlength="300" :rows="3" />
-                                    <AuditionTimbre :params="flowForm" type="ivr" />
+                                    <AuditionTimbre :params="flowForm" type="ivr" :tts="ttsSource" />
                                 </el-form-item>
                             </el-col>
                         </el-row>
@@ -292,7 +292,7 @@
     import FlowNodeForm from './node_form'
     import ScriptContent from './script_content'
     import { ForceDirected } from './force-directed'
-    import { creatIvr, editIvr } from '@/api/ivrManage'
+    import { creatIvr, editIvr, getIvrData } from '@/api/ivrManage'
     import { cloneDeep, findLastIndex, assign, merge } from 'lodash'
     import { getGatewayGroupId, getSkills, getParamType, getTimbre, getTemList } from '@/api/common'
     import AuditionTimbre from './AuditionTimbre'
@@ -540,8 +540,58 @@
                 }
             }
         },
+        computed: {
+            rules() {
+                const validateNum = (rule, value, callback, text) => {
+                    if (value < 0 || value > 100) {
+                        callback(new Error('音量范围0～100'))
+                    } else {
+                        callback()
+                    }
+                }
+                const validatePitch = (rule, value, callback) => {
+                    if (value < -500 || value > 500) {
+                        callback(new Error('语调范围-500～500'))
+                    } else {
+                        callback()
+                    }
+                }
+                const validateSpeed = (rule, value, callback) => {
+                    if (value < -500 || value > 500) {
+                        callback(new Error('语速范围-500～500'))
+                    } else {
+                        callback()
+                    }
+                }
+                const validateSpeedMt = (rule, value, callback) => {
+                    if (value < 0 || value > 100) {
+                        callback(new Error('语速范围0~100'))
+                    } else {
+                        callback()
+                    }
+                }
+                return {
+                    name: [
+                        { required: true, message: '请输入表单名称', trigger: 'blur' }
+                    ],
+                    volume: [
+                        { validator: validateNum, trigger: 'blur'}
+                    ],
+                    intonation: [
+                        { validator: validatePitch, trigger: 'blur'}
+                    ],
+                    speed: [this.ttsSource === 'ali'
+                        ? { validator: validateSpeed, trigger: 'blur'}
+                        : { validator: validateSpeedMt, trigger: 'blur'}
+                    ]
+                }
+            }
+        },
         mounted() {
             document.addEventListener('click', this.closeRmenu)
+            const userInfo = JSON.parse(localStorage.userInfo)
+            if (userInfo.ttsSource) this.ttsSource = userInfo.ttsSource
+            if (this.ttsSource === 'mt') this.flowForm.speed = 50
             !this.state && this.initSpeaker()
             this.jsPlumb = jsPlumb.getInstance()
             this.getGatewayGroup()
@@ -549,7 +599,7 @@
             this.getGroup(false)
             this.getNotice()
             this.getParamType()
-            if (this.ivrData) {
+            if (this.id) {
                 this.renderIvr()
             } else {
                 this.dataReload(this.data)
@@ -560,9 +610,6 @@
                 this.rmenu = false
             },
             initSpeaker() {
-                // const userInfo = JSON.parse(localStorage.userInfo)
-                // if (userInfo.ttsSource) this.ttsSource = userInfo.ttsSource
-                // this.flowForm.speaker = this.ttsSource === 'ali' ? 'aixia' : 'meifannan'
                 getTimbre().then(res => {
                     this.timbres = res.data
                     this.flowForm.speaker = res.data[0].code
@@ -1145,7 +1192,7 @@
                                 editIvr(this.id, params).then(() => {
                                     this.$message.success('编辑成功')
                                     this.titDialog = false
-                                    this.$emit('saveCloseDialog')
+                                    this.$emit('saveCloseDialog', res.data)
                                     this.loading = false
                                 }).catch(() => {
                                     this.loading = false
@@ -1154,10 +1201,10 @@
                                 this.$message.error('未获取到ID')
                             }
                         } else {
-                            creatIvr(params).then(() => {
+                            creatIvr(params).then(res => {
                                 this.$message.success('保存成功')
                                 this.titDialog = false
-                                this.$emit('saveCloseDialog')
+                                this.$emit('saveCloseDialog', res.data)
                                 this.loading = false
                             }).catch(() => {
                                 this.loading = false
@@ -1328,26 +1375,28 @@
             },
             // 渲染流程
             renderIvr() {
-                const data = Object.assign({}, this.ivrData)
-                const flowData = JSON.parse(data.content)
-                for (let i = 0; i < flowData.lineList.length; i++) {
-                    let line = flowData.lineList[i]
-                    line.label = {
-                        'Y': '是',
-                        'N': '否',
-                        '-1': '任意键',
-                        '-2': '直接跳转'
-                    }[line.label] || line.label
-                }
-                this.flowTit = data.name
-                this.dataReload(this.handleNode(flowData))
-                this.flowForm = Object.assign({}, this.flowForm, data)
-                this.flowForm.speaker = this.flowForm.speaker || 'aixia'
-                // 参数
-                this.flowForm.params = data.inputParams && data.inputParams !== '[{}]' ? JSON.parse(data.inputParams) : []
-                this.flowForm.outputParams = data.outputParams && data.outputParams !== '[{}]' ? JSON.parse(data.outputParams) : []
-                delete this.flowForm.inputParams
-                this.handleSpeaker()
+                getIvrData(this.id).then(res => {
+                    const data = Object.assign({}, res.data)
+                    const flowData = JSON.parse(data.content)
+                    for (let i = 0; i < flowData.lineList.length; i++) {
+                        let line = flowData.lineList[i]
+                        line.label = {
+                            'Y': '是',
+                            'N': '否',
+                            '-1': '任意键',
+                            '-2': '直接跳转'
+                        }[line.label] || line.label
+                    }
+                    this.flowTit = data.name
+                    this.dataReload(this.handleNode(flowData))
+                    this.flowForm = Object.assign({}, this.flowForm, data)
+                    this.flowForm.speaker = this.flowForm.speaker || 'aixia'
+                    // 参数
+                    this.flowForm.params = data.inputParams && data.inputParams !== '[{}]' ? JSON.parse(data.inputParams) : []
+                    this.flowForm.outputParams = data.outputParams && data.outputParams !== '[{}]' ? JSON.parse(data.outputParams) : []
+                    delete this.flowForm.inputParams
+                    this.handleSpeaker()
+                })
             }
         }
     }

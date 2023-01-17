@@ -23,3 +23,7 @@ export function delIvrTem(id) {
     return api.delete(`/ivr/${id}`)
 }
 
+// 查询ivr详情
+export function getIvrData(id) {
+    return api.get(`/ivr/${id}`)
+}

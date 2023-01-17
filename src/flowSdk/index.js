@@ -54,7 +54,6 @@ class JsSDK {
         password: '',
         id: '',
         state: '',
-        ivrData: null,
         closeBtn: false,
         onClose: ()=>{},
         onSave: ()=>{}
