@@ -26,7 +26,7 @@ flowSDK.init({
 	id: '', // ivr模版id
       state: '', // 流程状态 '':新增；'edit':编辑；'detail':查看
       ivrData: null, // 当前模版数据，用来渲染
-      closeBtn: false, // 是否需要返回按钮，
+      closeBtn: false, // 是否需要返回按钮，默认true
 	onClose: () => {}, // 返回按钮点击事件
 	onSave: id => {} // 最终保存成功的回调函数,返回ivr的id
  })
@@ -50,7 +50,7 @@ authType为token时`必传`
 #### state
 `必传`模版状态，新增：''; 编辑：edit；查看：detail
 #### closeBtn
-是否需要返回按钮
+是否需要返回按钮，默认true
 #### onClose
 `function`返回按钮点击事件函数
 #### onSave
