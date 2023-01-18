@@ -55,3 +55,17 @@ authType为token时`必传`
 `function`返回按钮点击事件函数
 #### onSave
 `function`最终保存成功的回调函数，返回创建的ivr模版id
+
+###错误提示
+如果使用中报如下错误：
+```js
+vue-router.esm.js?8c4f:2314 Error: Module parse failed: Unexpected token (1:27676)
+...
+...
+```
+原因是js中存在es6语法，默认情况下 babel-loader 会忽略所有 node_modules 中的文件
+####解决方法
+以vue项目为例，在`vue.config.js`中配置
+```js
+ transpileDependencies: ['element-ui', 'weihu-flow-sdk']
+```
