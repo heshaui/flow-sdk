@@ -1,7 +1,7 @@
 <template>
     <div class="auditionTimbre">
-        <!-- <el-button size="small" type="primary" icon="el-icon-headset" @click="playAudio">试听音色</el-button> -->
-        <el-dialog title="试听音色" :visible.sync="audioDialog" append-to-body :close-on-click-modal="false" width="400px" class="hBg" @close="onClose">
+        <el-button size="small" type="primary" icon="el-icon-headset" @click="playAudio">试听音色</el-button>
+        <el-dialog title="试听音色" :visible.sync="audioDialog" append-to-body :close-on-click-modal="false" width="400px" class="hBg index3000" @close="onClose">
             <div v-loading="audioLoading">
                 <audio v-if="isIos" ref="audio" controls="controls" autoplay>
                     <source type="audio/mpeg" :src="audioSrc">
@@ -16,6 +16,7 @@
 
 <script>
 import axios from 'axios'
+import { setModal } from './utils'
 export default {
     name: 'AuditionTimbre',
     props: {
@@ -39,6 +40,7 @@ export default {
     },
     watch: {
         audioDialog(val) {
+            setModal(val)
             val && this.handleAudio()
         }
     },
@@ -92,7 +94,7 @@ export default {
         handleAudio() {
             this.audioSrc = ''
             this.audioLoading = true
-            let url = `${this.$baseUrl}/tts/voice/download`
+            let url = 'obc/api/tts/voice/download'
             axios.get(url, {
                 responseType: 'arraybuffer',
                 params: this.setParams()

@@ -5,6 +5,8 @@
             width="70%"
             append-to-body
             custom-class="flowInfo"
+            class="index3000"
+            @close="$emit('onClose')"
     >
         <el-alert
                 title="使用说明"
@@ -75,6 +77,7 @@
                 this.$message.error('抱歉，复制失败！')
             },
             close() {
+                this.$emit('onClose')
                 this.dialogVisible = false
             }
         }

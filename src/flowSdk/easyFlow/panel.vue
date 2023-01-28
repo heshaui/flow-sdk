@@ -203,10 +203,10 @@
             </el-table>
         </div>
         <!-- 流程数据详情 -->
-        <flow-info v-if="flowInfoVisible" ref="flowInfo" :data="data" @saveCode="editDataInfo"></flow-info>
-        <flow-help v-if="flowHelpVisible" ref="flowHelp"></flow-help>
+        <flow-info v-if="flowInfoVisible" ref="flowInfo" :data="data" @saveCode="editDataInfo" @onClose="flowInfoVisible=false"></flow-info>
+        <flow-help v-if="flowHelpVisible" ref="flowHelp" @onClose="flowHelpVisible = false"></flow-help>
         <!-- 流程图名称 -->
-        <el-dialog title="基本信息" :visible.sync="titDialog" append-to-body width="400px" class="hBg">
+        <el-dialog title="基本信息" :visible.sync="titDialog" append-to-body width="400px" class="hBg index3000">
             <el-form ref="flowForm" :model="flowForm" :rules="rules">
                 <el-form-item label="模版名称" prop="name">
                     <el-input v-model="flowForm.name" />
@@ -221,7 +221,7 @@
             </div>
         </el-dialog>
         <!-- 添加参数弹出框 -->
-        <el-dialog v-if="paramDialog" :title="dialogTit" :visible.sync="paramDialog" append-to-body width="800px" class="hBg">
+        <el-dialog v-if="paramDialog" :title="dialogTit" :visible.sync="paramDialog" append-to-body width="800px" class="hBg index3000">
             <el-form ref="paramForm" :model="paramForm" :rules="paramRules" label-width="80px" style="padding: 10px 20px;">
                 <el-row v-if="paramType !== 'mapVal'" :gutter="20">
                     <el-col :span="12" :xs="24">
@@ -294,6 +294,7 @@
     import { ForceDirected } from './force-directed'
     import { creatIvr, editIvr, getIvrData } from '@/api/ivrManage'
     import { cloneDeep, findLastIndex, assign, merge } from 'lodash'
+    import { setModal } from './utils'
     import { getGatewayGroupId, getSkills, getParamType, getTimbre, getTemList } from '@/api/common'
     import AuditionTimbre from './AuditionTimbre'
     export default {
@@ -437,17 +438,6 @@
                     params: [],
                     auditionContent: '您好，这里是音色试听，您好，这里是音色试听'
                 },
-                rules: {
-                    name: [
-                        { required: true, message: '请输入表单名称', trigger: 'blur' }
-                    ],
-                    volume: [
-                        { validator: validateNum, trigger: 'blur'}
-                    ],
-                    // speed: [
-                    //     { validator: validateNum, trigger: 'blur'}
-                    // ]
-                },
                 titDialog: false,
                 // 展开收起右侧表单
                 rightOpen: false,
@@ -585,6 +575,20 @@
                         : { validator: validateSpeedMt, trigger: 'blur'}
                     ]
                 }
+            }
+        },
+        watch: {
+            flowHelpVisible(val) {
+                setModal(val)
+            },
+            flowInfoVisible(val) {
+                setModal(val)
+            },
+            titDialog(val) {
+                setModal(val)
+            },
+            paramDialog(val) {
+                setModal(val)
             }
         },
         mounted() {
@@ -1403,6 +1407,9 @@
 </script>
 
 <style lang="scss" scoped>
+.index3000 {
+    z-index: 99999 !important;
+}
 .el-node-form-tag {
     position: absolute;
     margin: auto;

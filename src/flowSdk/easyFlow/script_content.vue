@@ -75,7 +75,7 @@ export default {
     },
     methods: {
         getSrc(src) {
-            this.audioSrc = `${this.$baseUrl}/file/download/${src}?token=${localStorage.token}`
+            this.audioSrc = `obc/api/file/download/${src}?token=${localStorage.token}`
         },
         // 获取内容中鼠标的位置
         getConPos(e) {

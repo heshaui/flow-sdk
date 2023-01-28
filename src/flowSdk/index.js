@@ -67,7 +67,6 @@ class JsSDK {
     this.options = Object.assign({}, options);
     options.authType === 'login' && JsSDK.onlogin()
     options.authType === 'token' && JsSDK.getToken()
-    console.log(this.options)
     const el = this.options.el;
     new Vue({
       render: (h) => h(main, { 

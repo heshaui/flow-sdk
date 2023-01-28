@@ -10,7 +10,7 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "sdk": "vue-cli-service build --target lib --inline-vue --name flowSdk src/flowSdk/index.js"
+    "sdk": "vue-cli-service build --target lib --inline-vue --name flowSdk src/flowSdk/index.js && node ./copyFile.js"
   },
   "dependencies": {
     "axios": "^0.27.2",
