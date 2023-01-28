@@ -6,7 +6,7 @@ import main from "./easyFlow/panel.vue"
 import { login, getToken } from '@/api/common'
 import Base64 from './easyFlow/base64'
 import ElementUI from 'element-ui'
-Vue.use(ElementUI);
+Vue.use(ElementUI, {zIndex: 300000});
 
 
 class JsSDK {

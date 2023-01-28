@@ -5,8 +5,6 @@
         width="70%"
         custom-class="flowHelp"
         append-to-body
-        class="index3000"
-        @close="$emit('onClose')"
     >
         <el-tabs tab-position="left">
             <el-tab-pane label="如何新增">
@@ -57,8 +55,5 @@ export default {
 <style>
     .flowHelp {
         height: 80%;
-    }
-    .index3000 {
-        z-index: 99999 !important;
     }
 </style>

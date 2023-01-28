@@ -203,8 +203,8 @@
             </el-table>
         </div>
         <!-- 流程数据详情 -->
-        <flow-info v-if="flowInfoVisible" ref="flowInfo" :data="data" @saveCode="editDataInfo" @onClose="flowInfoVisible=false"></flow-info>
-        <flow-help v-if="flowHelpVisible" ref="flowHelp" @onClose="flowHelpVisible = false"></flow-help>
+        <flow-info v-if="flowInfoVisible" ref="flowInfo" :data="data" @saveCode="editDataInfo"></flow-info>
+        <flow-help v-if="flowHelpVisible" ref="flowHelp"></flow-help>
         <!-- 流程图名称 -->
         <el-dialog title="基本信息" :visible.sync="titDialog" append-to-body width="400px" class="hBg index3000">
             <el-form ref="flowForm" :model="flowForm" :rules="rules">
@@ -294,7 +294,6 @@
     import { ForceDirected } from './force-directed'
     import { creatIvr, editIvr, getIvrData } from '@/api/ivrManage'
     import { cloneDeep, findLastIndex, assign, merge } from 'lodash'
-    import { setModal } from './utils'
     import { getGatewayGroupId, getSkills, getParamType, getTimbre, getTemList } from '@/api/common'
     import AuditionTimbre from './AuditionTimbre'
     export default {
@@ -317,13 +316,6 @@
             }
         },
         data() {
-            const validateNum = (rule, value, callback) => {
-                if (value < 0 || value > 100) {
-                    callback(new Error('音量范围0～100'))
-                } else {
-                    callback()
-                }
-            }
             return {
                 isZh: localStorage.language === 'zh',
                 rmenu: false,
@@ -431,10 +423,6 @@
                     keyErrorNumber: 1,
                     eventAudioFile: '',
                     eventAudioText: '',
-                    // noRespText: '',
-                    // noRespPath: '',
-                    // noRespNodeRepeat: 1,
-                    // noRespEvent: 0,
                     params: [],
                     auditionContent: '您好，这里是音色试听，您好，这里是音色试听'
                 },
@@ -443,17 +431,6 @@
                 rightOpen: false,
                 // tab切换
                 activeName: 'flow',
-                marks: {
-                    '0': '0%',
-                    '100': '100%',
-                    '200': '200%',
-                    '300': {
-                        style: {
-                            width: '50px'
-                        },
-                        label: '300%'
-                    }
-                },
                 // 参数弹框开关
                 paramDialog: false,
                 // 参数弹框标题
@@ -575,20 +552,6 @@
                         : { validator: validateSpeedMt, trigger: 'blur'}
                     ]
                 }
-            }
-        },
-        watch: {
-            flowHelpVisible(val) {
-                setModal(val)
-            },
-            flowInfoVisible(val) {
-                setModal(val)
-            },
-            titDialog(val) {
-                setModal(val)
-            },
-            paramDialog(val) {
-                setModal(val)
             }
         },
         mounted() {
@@ -1407,9 +1370,6 @@
 </script>
 
 <style lang="scss" scoped>
-.index3000 {
-    z-index: 99999 !important;
-}
 .el-node-form-tag {
     position: absolute;
     margin: auto;

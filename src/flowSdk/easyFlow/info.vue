@@ -5,8 +5,6 @@
             width="70%"
             append-to-body
             custom-class="flowInfo"
-            class="index3000"
-            @close="$emit('onClose')"
     >
         <el-alert
                 title="使用说明"

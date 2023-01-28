@@ -16,7 +16,6 @@
 
 <script>
 import axios from 'axios'
-import { setModal } from './utils'
 export default {
     name: 'AuditionTimbre',
     props: {
@@ -40,7 +39,6 @@ export default {
     },
     watch: {
         audioDialog(val) {
-            setModal(val)
             val && this.handleAudio()
         }
     },
