@@ -3,7 +3,7 @@ module.exports = {
   productionSourceMap: false,
   // assetsDir: "static",
   parallel: false,
-  publicPath: "weihu-flow-sdk/",
+  // publicPath: "weihu-flow-sdk/",
   runtimeCompiler: true,
   devServer: {
     host: "localhost",
