@@ -47,27 +47,14 @@ export function arrayGroupBy(list, groupId) {
     return sorted
 }
 
-// 处理el-dialog的遮罩层
-export function setModal(val) {
-    if (val) {
-        let model = document.createElement('div')
-        model.className = 'modalPlus'
-        model.setAttribute('tabindex', '0')
-        model.setAttribute('style', 'z-index: 99990')
-        document.body.appendChild(model)
-        const timer = setTimeout(() => {
-            const elModals = document.getElementsByClassName('v-modal')
-            for(let modal of elModals) {
-                modal.style.display = 'none'
-            }
-            clearTimeout(timer)
-        })
-    } else {
-        let model = document.getElementsByClassName('modalPlus')[0]
-        document.body.removeChild(model)
-        const elModals = document.getElementsByClassName('v-modal')
-        for(let modal of elModals) {
-            modal.style.display = 'block'
-        }
-    }
+/**
+ * 创建下载方法
+ */
+ export function downMethod(url, name) {
+    let downloadLink = document.createElement('a')
+    downloadLink.href = encodeURI(url)
+    downloadLink.download =  name || '' // `${name}.csv`
+    document.body.appendChild(downloadLink)
+    downloadLink.click()
+    document.body.removeChild(downloadLink)
 }

@@ -1,11 +1,7 @@
 {
   "name": "weihu-flow-sdk",
-  "version": "1.0.2",
-  "main": "./dist/flowSdk.umd.min.js",
-  "files": [
-    "dist"
-  ],
-  "license": "MIT",
+  "version": "1.0.0",
+  "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",

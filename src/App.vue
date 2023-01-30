@@ -110,8 +110,8 @@
 <script>
 import { getIvrList, delIvrTem } from '@/api/ivrManage'
 import { login } from '@/api/common'
-import flowSdk from './flowSdk/index'
-// import flowSdk from 'weihu-flow-sdk'
+// import flowSdk from './flowSdk/index'
+import flowSdk from 'weihu-flow-sdk'
 export default {
   data() {
       return {
