@@ -2,7 +2,7 @@
 import Vue from "vue";
 import './easyFlow/index.css'
 import './easyFlow/reset.scss'
-import main from "./easyFlow/panel.vue"
+import main from "./easyFlow/main.vue"
 import { login, getToken } from '@/api/common'
 import Base64 from './easyFlow/base64'
 import ElementUI from 'element-ui'
@@ -11,10 +11,6 @@ Vue.use(ElementUI, {zIndex: 300000});
 
 class JsSDK {
   constructor(options, callback) {
-    // if (!JsSDK.instance) {
-    //   JsSDK.render(options, callback);
-    //   JsSDK.instance = this;
-    // }
     JsSDK.render(options, callback);
   }
 
@@ -29,6 +25,8 @@ class JsSDK {
         password: pass
       }).then(res => {
         localStorage.token = res.data.auth
+        localStorage.companyId = res.data.companyId
+        localStorage.userInfo = JSON.stringify(res.data.userInfo)
       })
     }
   }
@@ -68,24 +66,24 @@ class JsSDK {
     options.authType === 'login' && JsSDK.onlogin()
     options.authType === 'token' && JsSDK.getToken()
     const el = this.options.el;
-    new Vue({
+    // vue实例
+    const $sdk = new Vue({
       render: (h) => h(main, { 
         props: this.options,
         on: {
-          closeDetailDialog: this.options.onClose ? this.options.onClose : '',
-          saveCloseDialog: this.options.onSave ? this.options.onSave : ''
+          onClose: this.options.onClose ? this.options.onClose : '',
+          onSave: this.options.onSave ? this.options.onSave : ''
         } 
       }),
       mounted () {
         callback && callback();
       }
-    }).$mount(el);
+    }).$mount();
+    // 将实例添加到元素上
+    document.getElementById(el).appendChild($sdk.$el)
   }
 
   static init (options, callback) {
-    // if (!this.instance) {
-    //   this.instance = new JsSDK(options, callback);
-    // }
     return new JsSDK(options, callback);
   }
 }

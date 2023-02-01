@@ -556,9 +556,11 @@
         },
         mounted() {
             document.addEventListener('click', this.closeRmenu)
-            const userInfo = JSON.parse(localStorage.userInfo)
-            if (userInfo.ttsSource) this.ttsSource = userInfo.ttsSource
-            if (this.ttsSource === 'mt') this.flowForm.speed = 50
+            if (localStorage?.userInfo) {
+                const userInfo = JSON.parse(localStorage.userInfo)
+                if (userInfo.ttsSource) this.ttsSource = userInfo.ttsSource
+                if (this.ttsSource === 'mt') this.flowForm.speed = 50
+            }
             !this.state && this.initSpeaker()
             this.jsPlumb = jsPlumb.getInstance()
             this.getGatewayGroup()
@@ -1062,7 +1064,7 @@
             },
             // 关闭
             closeDetailDialog() {
-                this.$emit('closeDetailDialog')
+                this.$emit('onClose')
             },
             // 校验流程图是否正确
             validateFlow() {
@@ -1159,7 +1161,7 @@
                                 editIvr(this.id, params).then(() => {
                                     this.$message.success('编辑成功')
                                     this.titDialog = false
-                                    this.$emit('saveCloseDialog', res.data)
+                                    this.$emit('onSave', res.data)
                                     this.loading = false
                                 }).catch(() => {
                                     this.loading = false
@@ -1171,7 +1173,7 @@
                             creatIvr(params).then(res => {
                                 this.$message.success('保存成功')
                                 this.titDialog = false
-                                this.$emit('saveCloseDialog', res.data)
+                                this.$emit('onSave', res.data)
                                 this.loading = false
                             }).catch(() => {
                                 this.loading = false

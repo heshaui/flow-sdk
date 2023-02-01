@@ -110,8 +110,8 @@
 <script>
 import { getIvrList, delIvrTem } from '@/api/ivrManage'
 import { login } from '@/api/common'
-// import flowSdk from './flowSdk/index'
-import flowSdk from 'weihu-flow-sdk'
+import flowSdk from './flowSdk/index'
+// import flowSdk from 'weihu-flow-sdk'
 export default {
   data() {
       return {
@@ -278,15 +278,15 @@ export default {
       toDetail(row, state) {
           this.detailDialog = true
           this.state = state
-          setTimeout(() => {
-              flowSdk.init({
-                  el: '#flowsdk',
-                  login: 'default',
-                  id: row?.id ?? '',
-                  state: state,
-                  onClose: this.closeDetailDialog,
-                  onSave: this.saveCloseDialog
-              })
+          this.$nextTick(() => {
+            flowSdk.init({
+                el: 'flowsdk',
+                login: 'default',
+                id: row?.id ?? '',
+                state: state,
+                onClose: this.closeDetailDialog,
+                onSave: this.saveCloseDialog
+            })
           })
       },
       // 删除表单
