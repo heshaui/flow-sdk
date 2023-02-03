@@ -4,8 +4,8 @@ function apiConfig(api) {
     // 提交
     api.interceptors.request.use(
         request => {
-            if (localStorage.token) {
-                request.headers.Authorization = localStorage.token
+            if (localStorage.flowToken) {
+                request.headers.Authorization = localStorage.flowToken
             }
             return request
         }

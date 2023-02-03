@@ -32,7 +32,8 @@ export default {
         tts: {
             type: String,
             default: 'ali'
-        }
+        },
+        baseUrl: String
     },
     data() {
         return {
@@ -64,7 +65,7 @@ export default {
                 if (this.params.content) text = this.params.content.slice(0, 300)
             }
             const params = {
-                token: localStorage.token,
+                token: localStorage.flowToken,
                 volume: this.params.volume,
                 pitch: this.type === 'ivr' ? this.params.intonation : this.params.pitch,
                 speech: this.type === 'ivr' ? this.params.speed : this.params.speech,
@@ -97,7 +98,7 @@ export default {
         handleAudio() {
             this.audioSrc = ''
             this.audioLoading = true
-            let url = `obc/api/tts/voice/download`
+            let url = `${this.baseUrl}/obc/api/tts/voice/download`
             axios.get(url, {
                 responseType: 'arraybuffer',
                 params: this.setParams()
@@ -138,7 +139,7 @@ export default {
         },
         downAudio() {
             const params = this.setParams()
-            const url = `obc/api/tts/voice/download?token=${params.token}&volume=${params.volume}&pitch=${params.pitch}&speech=${params.speech}&voice=${params.voice}&text=${params.text}`
+            const url = `${this.baseUrl}/obc/api/tts/voice/download?token=${params.token}&volume=${params.volume}&pitch=${params.pitch}&speech=${params.speech}&voice=${params.voice}&text=${params.text}`
             const name = this.getName(params)
             this.downloadFile(url, name)
         }

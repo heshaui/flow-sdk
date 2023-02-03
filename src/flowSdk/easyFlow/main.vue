@@ -4,6 +4,7 @@
         :id="id" 
         :state="state" 
         :close-btn="closeBtn" 
+        :base-url="baseUrl"
         @onClose = "onClose"
         @onSave = "onSave"
     />
@@ -19,6 +20,10 @@ export default {
         closeBtn: {
             type: Boolean,
             default: true
+        },
+        baseUrl: {
+            type: String,
+            default: 'https://cc.v-call.cn'
         }
     },
     data() {

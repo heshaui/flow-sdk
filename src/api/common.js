@@ -1,125 +1,165 @@
 import api from './index'
 import qs from 'qs'
+const baseUrl_default = 'http://192.168.0.187:8084'
+
 // 获取企业列表
-export function getCompanyList() {
-    return api.get('/admin/company/all')
+export function getCompanyList(baseUrl) {
+    return api.get('/obc/api/admin/company/all', {
+        baseURL: baseUrl ? baseUrl : baseUrl_default
+    })
 }
 
 // 获取用户列表
-export function getUserList() {
-    return api.get('/user/list')
+export function getUserList(baseUrl) {
+    return api.get('/obc/api/user/list', {
+        baseURL: baseUrl ? baseUrl : baseUrl_default
+    })
 }
 
 // 获取网关组id
-export function getGatewayGroupId() {
-    return api.get('/admin/sip/gwgroup/list')
+export function getGatewayGroupId(baseUrl) {
+    return api.get('/obc/api/admin/sip/gwgroup/list', {
+        baseURL: baseUrl ? baseUrl : baseUrl_default
+    })
 }
 
 // 获取行业列表
-export function getBusinessList() {
-    return api.get('/admin/industry/all')
+export function getBusinessList(baseUrl) {
+    return api.get('/obc/api/admin/industry/all', {
+        baseURL: baseUrl ? baseUrl : baseUrl_default
+    })
 }
 
 // 获取角色列表 /role/list
-export function getRoleList() {
-    return api.get('/role/list')
+export function getRoleList(baseUrl) {
+    return api.get('/obc/api/role/list', {
+        baseURL: baseUrl ? baseUrl : baseUrl_default
+    })
 }
 
 // 获取主叫列表
-export function getCallerList(id) {
-    return api.get('/callnum/pool/list', {
-        params: { companyId: id }
+export function getCallerList(baseUrl,id) {
+    return api.get('/obc/api/callnum/pool/list', {
+        params: { companyId: id },
+        baseURL: baseUrl ? baseUrl : baseUrl_default
     })
 }
 
 // 获取技能组列表
-export function getSkills(params) {
-    return api.get('/group/list', {
-        params: params
+export function getSkills(baseUrl,params) {
+    return api.get('/obc/api/group/list', {
+        params: params,
+        baseURL: baseUrl ? baseUrl : baseUrl_default
     })
 }
 
 // 获取未绑定外显号码列表
-export function getFreeCallnum() {
-    return api.get('/callnum/list')
+export function getFreeCallnum(baseUrl) {
+    return api.get('/obc/api/callnum/list', {
+        baseURL: baseUrl ? baseUrl : baseUrl_default
+    })
 }
 
 // 获取座席列表
-export function getSeatsList(params) {
-    return api.get('/agent/list', {
-        params: params
+export function getSeatsList(baseUrl,params) {
+    return api.get('/obc/api/agent/list', {
+        params: params,
+        baseURL: baseUrl ? baseUrl : baseUrl_default
     })
 }
 
 // 获取sip列表
-export function getSipList() {
-    return api.get('/sip/user/list')
+export function getSipList(baseUrl) {
+    return api.get('/obc/api/sip/user/list', {
+        baseURL: baseUrl ? baseUrl : baseUrl_default
+    })
 }
 
 // 获取权限列表
-export function getPermission() {
-    return api.get('/permission')
+export function getPermission(baseUrl) {
+    return api.get('/obc/api/permission', {
+        baseURL: baseUrl ? baseUrl : baseUrl_default
+    })
 }
 
 // 获取表单列表
-export function getFormList() {
-    return api.get('/form/list')
+export function getFormList(baseUrl) {
+    return api.get('/obc/api/form/list', {
+        baseURL: baseUrl ? baseUrl : baseUrl_default
+    })
 }
 
 // 获取企业并发数
-export function getLimit(id) {
-    return api.get(`/admin/surplusLimit/${id}`)
+export function getLimit(baseUrl,id) {
+    return api.get(`obc/api/admin/surplusLimit/${id}`, {
+        baseURL: baseUrl ? baseUrl : baseUrl_default
+    })
 }
 
 // 获取ivr列表
-export function getIvrList(params) {
-    return api.get('/ivr/list', {
-        params: params
+export function getIvrList(baseUrl,params) {
+    return api.get('/obc/api/ivr/list', {
+        params: params,
+        baseURL: baseUrl ? baseUrl : baseUrl_default
     })
 }
 
 // 获取入参类型表
-export function getParamType() {
-    return api.get('/input/format/all')
+export function getParamType(baseUrl) {
+    return api.get('/obc/api/input/format/all', {
+        baseURL: baseUrl ? baseUrl : baseUrl_default
+    })
 }
 
 // 公共下载方法
-export function getTemplate(url) {
-    return api.get(url)
+export function getTemplate(baseUrl,url) {
+    return api.get(url, {
+        baseURL: baseUrl ? baseUrl : baseUrl_default
+    })
 }
 
 // 语音上传服务
-export function uploadFile(params) {
-    return api.post('/ivr/importAudio', params, {
+export function uploadFile(baseUrl,params) {
+    return api.post('/obc/api/ivr/importAudio', params, {
         headers: {
             'Content-Type': 'multipart/form-data'
-        }
+        },
+        baseURL: baseUrl ? baseUrl : baseUrl_default
     })
 }
 
 // 获取音色
-export function getTimbre() {
-    return api.get('/tone/list')
+export function getTimbre(baseUrl) {
+    return api.get('/obc/api/tone/list', {
+        baseURL: baseUrl ? baseUrl : baseUrl_default
+    })
 }
 
 // 获取问卷调查模板
-export function getQTemplates() {
-    return api.get('/ivr/statistics/list')
+export function getQTemplates(baseUrl) {
+    return api.get('/obc/api/ivr/statistics/list', {
+        baseURL: baseUrl ? baseUrl : baseUrl_default
+    })
 }
 
 // 获取语音通知模版列表
-export function getTemList(params) {
-    return api.get('/template/select/list', {
-        params: params
+export function getTemList(baseUrl,params) {
+    return api.get('/obc/api/template/select/list', {
+        params: params,
+        baseURL: baseUrl ? baseUrl : baseUrl_default
     })
 }
 
 // 登录
-export function login(params) {
-    return api.post('/login', qs.stringify(params))
+export function login(baseUrl, params) {
+    return api.post('/obc/api/login', qs.stringify(params), {
+        baseURL: baseUrl ? baseUrl : baseUrl_default
+    })
 }
 
 // 获取token
 export function getToken(params) {
-    return api.post('/token', params)
+    return api.post('/obc/api/token', params, {
+        baseURL: baseUrl ? baseUrl : baseUrl_default
+    })
 }

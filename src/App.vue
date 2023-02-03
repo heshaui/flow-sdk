@@ -227,11 +227,11 @@ export default {
   },
   methods: {
       login() {
-        login({
+        login('', {
           username: 'weihu',
           password: 'MTIzNDU2'
         }).then(res => {
-          localStorage.token = res.data.auth
+          localStorage.flowToken = res.data.auth
           localStorage.companyId = res.data.companyId
           localStorage.userInfo = JSON.stringify(res.data.userInfo)
           this.getList()
@@ -268,7 +268,7 @@ export default {
               pageSize: this.pagesize
           }
           if (this.form.name) params.name = this.form.name
-          getIvrList(params).then(res => {
+          getIvrList('', params).then(res => {
               if (res.data) {
                   this.temList = res.data
               }
@@ -281,7 +281,10 @@ export default {
           this.$nextTick(() => {
             flowSdk.init({
                 el: 'flowsdk',
-                login: 'default',
+                baseUrl: 'http://192.168.0.187:8084',
+                authType: 'default',
+                username: 'weihu',
+                password: '123456',
                 id: row?.id ?? '',
                 state: state,
                 onClose: this.closeDetailDialog,

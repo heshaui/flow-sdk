@@ -48,7 +48,8 @@ export default {
             default() {
                 return []
             }
-        }
+        },
+        baseUrl: String
     },
     data() {
         return {
@@ -75,7 +76,7 @@ export default {
     },
     methods: {
         getSrc(src) {
-            this.audioSrc = `obc/api/file/download/${src}?token=${localStorage.token}`
+            this.audioSrc = `${this.baseUrl}/obc/api/file/download/${src}?token=${localStorage.flowToken}`
         },
         // 获取内容中鼠标的位置
         getConPos(e) {
@@ -102,7 +103,7 @@ export default {
         uploadAudio(file) {
             let formdata = new FormData()
             formdata.append('file', file)
-            uploadFile(formdata).then(res => {
+            uploadFile(this.baseUrl, formdata).then(res => {
                 this.node.src = res.data
                 this.getSrc(res.data)
                 this.$emit('success', this.node.src)

@@ -88,6 +88,7 @@
                                 text: flowForm.keyErrorText
                             }"
                             :params="flowForm.params"
+                            :base-url="baseUrl"
                             @success="src => flowForm.keyErrorPath = src"
                             @delAudio="flowForm.keyErrorPath = ''"
                             @changeText="text => flowForm.keyErrorText = text"
@@ -107,6 +108,7 @@
                                 text: flowForm.eventAudioText
                             }"
                             :params="flowForm.params"
+                            :base-url="baseUrl"
                             @success="src => flowForm.eventAudioFile = src"
                             @delAudio="flowForm.eventAudioFile = ''"
                             @changeText="text => flowForm.eventAudioText = text"
@@ -157,7 +159,7 @@
                             <el-col :span="24">
                                 <el-form-item label="试听内容">
                                     <el-input v-model="flowForm.auditionContent" type="textarea"  placeholder="最多可输入300个字" :maxlength="300" :rows="3" />
-                                    <AuditionTimbre :params="flowForm" type="ivr" :tts="ttsSource" />
+                                    <AuditionTimbre :params="flowForm" type="ivr" :tts="ttsSource" :base-url="baseUrl" />
                                 </el-form-item>
                             </el-col>
                         </el-row>
@@ -313,7 +315,8 @@
             closeBtn: {
                 type: Boolean,
                 default: true
-            }
+            },
+            baseUrl: String
         },
         data() {
             return {
@@ -412,9 +415,9 @@
                     name: '',
                     descr: '',
                     speaker: 'aixia',
-                    volume: 100,
-                    speed: 100,
-                    intonation: 50,
+                    volume: 50,
+                    speed: 0,
+                    intonation: 0,
                     minBreakDuration: 500,
                     noInputJudgeDuration: 500,
                     keyErrorText: '',
@@ -579,20 +582,20 @@
                 this.rmenu = false
             },
             initSpeaker() {
-                getTimbre().then(res => {
+                getTimbre(this.baseUrl).then(res => {
                     this.timbres = res.data
                     this.flowForm.speaker = res.data[0].code
                 })
             },
             // 获取网关组id
             getGatewayGroup() {
-                getGatewayGroupId().then(res => {
+                getGatewayGroupId(this.baseUrl).then(res => {
                     this.gatewayGroup = res.data
                 })
             },
             // 获取技能组
             getGroup(type) {
-                getSkills({
+                getSkills(this.baseUrl, {
                     companyId: localStorage.companyId,
                     isRobotFlag: type ? 1 : 0
                 }).then(res => {
@@ -605,7 +608,7 @@
             },
             // 获取模版列表
             getNotice() {
-                getTemList({
+                getTemList(this.baseUrl, {
                     companyId: localStorage.companyId
                 }).then(res => {
                     if (res.data) this.noticeList = res.data
@@ -1158,7 +1161,7 @@
                         delete params.param
                         if (this.state === 'edit') {
                             if (this.id) {
-                                editIvr(this.id, params).then(() => {
+                                editIvr(this.baseUrl, this.id, params).then(() => {
                                     this.$message.success('编辑成功')
                                     this.titDialog = false
                                     this.$emit('onSave', res.data)
@@ -1170,7 +1173,7 @@
                                 this.$message.error('未获取到ID')
                             }
                         } else {
-                            creatIvr(params).then(res => {
+                            creatIvr(this.baseUrl, params).then(res => {
                                 this.$message.success('保存成功')
                                 this.titDialog = false
                                 this.$emit('onSave', res.data)
@@ -1186,7 +1189,7 @@
             },
             // 获取入参类型
             getParamType() {
-                getParamType().then(res => {
+                getParamType(this.baseUrl).then(res => {
                     this.typeList = res.data
                     // this.paramForm.dataType = res.data[0].fieldType
                 })
@@ -1335,7 +1338,7 @@
                 return flowData
             },
             handleSpeaker() {
-                getTimbre().then(res => {
+                getTimbre(this.baseUrl).then(res => {
                     this.timbres = res.data
                     const timbres = res.data
                     const mark = timbres.findIndex(item => item.code === this.flowForm.speaker)
@@ -1344,7 +1347,7 @@
             },
             // 渲染流程
             renderIvr() {
-                getIvrData(this.id).then(res => {
+                getIvrData(this.baseUrl, this.id).then(res => {
                     const data = Object.assign({}, res.data)
                     const flowData = JSON.parse(data.content)
                     for (let i = 0; i < flowData.lineList.length; i++) {

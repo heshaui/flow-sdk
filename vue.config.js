@@ -10,16 +10,16 @@ module.exports = {
     port: "8888",
     open: true,
     hot: true,
-    proxy: {
-      "/api": {
-        //企业门户
-        target: "http://192.168.0.187:8084/",
-        changeOrigin: true,
-        pathRewrite: {
-          "^/api": "/"
-        }
-      },
-    }
+    // proxy: {
+    //   "/api": {
+    //     //企业门户
+    //     target: "http://192.168.0.187:8084/",
+    //     changeOrigin: true,
+    //     pathRewrite: {
+    //       "^/api": "/"
+    //     }
+    //   },
+    // }
   },
   configureWebpack: {
     output: {
