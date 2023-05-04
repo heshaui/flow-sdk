@@ -415,7 +415,7 @@
                     name: '',
                     descr: '',
                     speaker: 'aixia',
-                    volume: 50,
+                    volume: 100,
                     speed: 0,
                     intonation: 0,
                     minBreakDuration: 500,
@@ -1363,6 +1363,7 @@
                     this.dataReload(this.handleNode(flowData))
                     this.flowForm = Object.assign({}, this.flowForm, data)
                     this.flowForm.speaker = this.flowForm.speaker || 'aixia'
+                    this.flowForm.volume = this.flowForm.volume || 100
                     // 参数
                     this.flowForm.params = data.inputParams && data.inputParams !== '[{}]' ? JSON.parse(data.inputParams) : []
                     this.flowForm.outputParams = data.outputParams && data.outputParams !== '[{}]' ? JSON.parse(data.outputParams) : []
