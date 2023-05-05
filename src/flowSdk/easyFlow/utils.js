@@ -58,3 +58,12 @@ export function arrayGroupBy(list, groupId) {
     downloadLink.click()
     document.body.removeChild(downloadLink)
 }
+
+// 校验失败后获取焦点
+export function getFocus() {
+    setTimeout(() => {
+        var isError = document.getElementsByClassName('is-error')
+        isError[0].querySelector('input').focus()
+    }, 100)
+    return false
+}

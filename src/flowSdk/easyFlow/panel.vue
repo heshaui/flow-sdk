@@ -28,7 +28,7 @@
                         <el-button type="info" plain round icon="el-icon-document" @click="dataInfo" size="mini">流程信息</el-button>
                         <el-button type="info" plain round icon="el-icon-document" @click="openHelp" size="mini">帮助</el-button>
                         <el-button v-if="state !== 'detail'" type="success" plain round icon="el-icon-save" @click="saveFlow" size="mini">保存</el-button>
-                        <el-button v-if="closeBtn" type="danger" plain round @click="closeDetailDialog" size="mini">返回</el-button>
+                        <el-button type="danger" plain round @click="closeDetailDialog" size="mini">返回</el-button>
                     </div>
                 </div>
             </el-col>
@@ -39,23 +39,21 @@
                 <node-menu @addNode="addNode" ref="nodeMenu"></node-menu>
             </div>
             <div id="efContainer"  class="container" ref="efContainer" v-flowDrag @contextmenu.prevent>
-                <template v-for="node in data.nodeList">
-                    <flow-node
-                        :id="node.id"
-                        :key="node.id"
-                        :node="node"
-                        :activeElement="activeElement"
-                        @changeNodeSite="changeNodeSite"
-                        @nodeRightMenu="nodeRightMenu"
-                        @clickNode="clickNode"
-                        @rightClick="rightClick"
-                    >
-                    </flow-node>
-                </template>
+                <flow-node
+                    v-for="node in data.nodeList"
+                    :id="node.id"
+                    :key="node.id"
+                    :node="node"
+                    :activeElement="activeElement"
+                    @changeNodeSite="changeNodeSite"
+                    @nodeRightMenu="nodeRightMenu"
+                    @clickNode="clickNode"
+                    @rightClick="rightClick"
+                />
                 <div style="width: 2000px; height: 2000px;"></div>
             </div>
             <!-- 右侧表单 -->
-            <div :class="rightOpen ? 'rightForm' : 'noWidth'" style="border-left: 1px solid #dce3e8; background-color: #fbfbfb; overflow: auto; transition: width 0.5s;">
+            <div :class="rightOpen ? activeElement.type === 'line' ? 'rightW300' : 'rightW600' : 'noWidth'" style="border-left: 1px solid #dce3e8; background-color: #fbfbfb; overflow: auto; transition: width 0.5s;">
                 <flow-node-form
                     ref="nodeForm"
                     :nodeData="data"
@@ -64,7 +62,11 @@
                     :gatewayGroup="gatewayGroup"
                     :flowList="flowList"
                     :groups="groups"
+                    :extensionGroups="extensionGroups"
                     :noticeList="noticeList"
+                    :lain-list="lainList"
+                    :ivrList="ivrList"
+                    :baseUrl="baseUrl"
                     @setLineLabel="setLineLabel"
                     @repaintEverything="repaintEverything"
                 />
@@ -85,33 +87,78 @@
                         <script-content
                             :form="{
                                 src: flowForm.keyErrorPath,
-                                text: flowForm.keyErrorText
+                                text: flowForm.keyErrorText,
+                                id: flowForm.keyErrorId
                             }"
                             :params="flowForm.params"
-                            :base-url="baseUrl"
+                            :lain-list="lainList"
+                            :baseUrl="baseUrl"
                             @success="src => flowForm.keyErrorPath = src"
-                            @delAudio="flowForm.keyErrorPath = ''"
+                            @delAudio="flowForm.keyErrorPath = '';flowForm.keyErrorId=''"
                             @changeText="text => flowForm.keyErrorText = text"
+                            @getAudio="data => {flowForm.keyErrorPath=data.src; flowForm.keyErrorId=data.id}"
+                            @getLainId="id => flowForm.keyErrorId=id"
                         />
-                        <el-form-item label="超出次数，执行">
+                        <el-form-item label="超出次数，执行" label-width="110px">
                             <el-select v-model="flowForm.keyErrorEvent">
                                 <el-option label="挂机" value="HANG_UP"/>
                                 <el-option label="返回上一级" value="RETURN_TO_SUPERIOR"/>
                                 <el-option label="放音并挂机" value="PLAY_AND_HANG_UP"/>
+                                <el-option label="转接" value="TRANSFER_STRATEGY"/>
                             </el-select>
                         </el-form-item>
+                        <el-form-item v-show="flowForm.keyErrorEvent === 'TRANSFER_STRATEGY'" label="转接类型" label-width="110px">
+                            <el-select v-model="flowForm.eventTransferType" @change="flowForm.eventTransferBusinessId=''">
+                                <el-option label="机器人" value="robot" />
+                                <el-option label="语音通知" value="notice" />
+                                <el-option label="技能组" value="group" />
+                                <el-option label="网关组" value="gw" />
+                                <el-option label="ivr" value="ivr" />
+                            </el-select>
+                        </el-form-item>
+                        <div v-show="flowForm.keyErrorEvent === 'TRANSFER_STRATEGY'">
+                            <el-form-item v-if="flowForm.eventTransferType === 'gw'" label="网关组" prop="eventTransferBusinessId" label-width="110px">
+                                <el-select v-model="flowForm.eventTransferBusinessId" filterable placeholder="请选择">
+                                    <el-option v-for="(v, key) in gatewayGroup" :key="key" :label="v.name" :value="v.id" />
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item v-if="flowForm.eventTransferType === 'robot'" label="流程名称" prop="eventTransferBusinessId" label-width="110px">
+                                <el-select v-model="flowForm.eventTransferBusinessId" filterable placeholder="请选择">
+                                    <el-option v-for="(v, key) in flowList" :key="key" :label="v.name" :value="v.id" />
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item v-if="flowForm.eventTransferType === 'group'" label="技能组" prop="eventTransferBusinessId" label-width="110px">
+                                <el-select v-model="flowForm.eventTransferBusinessId" filterable placeholder="请选择">
+                                    <el-option v-for="(v, key) in groups" :key="key" :label="v.name" :value="v.id" />
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item v-if="flowForm.eventTransferType === 'notice'" label="语音通知" prop="eventTransferBusinessId" label-width="110px">
+                                <el-select v-model="flowForm.eventTransferBusinessId" filterable placeholder="请选择">
+                                    <el-option v-for="(v, key) in noticeList" :key="key" :label="v.name" :value="v.templateSn" />
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item v-if="flowForm.eventTransferType === 'ivr'" label="IVR名称" prop="eventTransferBusinessId" label-width="110px">
+                                <el-select v-model="flowForm.eventTransferBusinessId" filterable placeholder="请选择">
+                                    <el-option v-for="(v, key) in ivrList" :key="key" :label="v.name" :value="v.id" />
+                                </el-select>
+                            </el-form-item>
+                        </div>
                         <script-content
                             v-if="flowForm.keyErrorEvent == 'PLAY_AND_HANG_UP'"
                             label="放音内容"
                             :form="{
                                 src: flowForm.eventAudioFile,
-                                text: flowForm.eventAudioText
+                                text: flowForm.eventAudioText,
+                                id: flowForm.eventAudioId
                             }"
                             :params="flowForm.params"
-                            :base-url="baseUrl"
+                            :lain-list="lainList"
+                            :baseUrl="baseUrl"
                             @success="src => flowForm.eventAudioFile = src"
-                            @delAudio="flowForm.eventAudioFile = ''"
+                            @delAudio="flowForm.eventAudioFile = '';flowForm.eventAudioId=''"
                             @changeText="text => flowForm.eventAudioText = text"
+                            @getAudio="data => {flowForm.eventAudioFile=data.src; flowForm.eventAudioId=data.id}"
+                            @getLainId="id => flowForm.eventAudioId=id"
                         />
                     </el-col>
                 </el-row>
@@ -122,7 +169,7 @@
             <el-form ref="flowForm" :model="flowForm" :rules="rules" label-width="180px" label-position="left" class="flowForm">
                 <h3>播放参数</h3>
                 <el-row>
-                    <el-col :span="16">
+                    <el-col :span="isMd ? 24 : isLg ? 20 : 16">
                         <el-row :gutter="50">
                             <el-col :span="12">
                                 <el-form-item label="最小打断时常(毫秒)">
@@ -134,32 +181,37 @@
                                     <el-input-number v-model="flowForm.noInputJudgeDuration" :min="500" :step="100" style="width: 100%;"/>
                                 </el-form-item>
                             </el-col>
+                        </el-row>
+                        <el-row v-if="openTts" :gutter="50">
                             <el-col :span="12">
                                 <el-form-item label="音色">
-                                    <el-select v-model="flowForm.speaker" style="width: 100%;">
+                                    <el-select v-model="flowForm.speaker" style="width: calc(100% - 120px);">
                                         <el-option v-for="(v, k) in timbres" :key="k" :label="v.name" :value="v.code" />
                                     </el-select>
+                                    <AuditionTimbre :params="flowForm" :baseUrl="baseUrl" type="ivr" :tts="ttsSource" style="width: 100px; float: right;" />
                                 </el-form-item>
                             </el-col>
                             <el-col :span="12">
                                 <el-form-item label="语速" prop="speed">
-                                    <el-input-number v-model="flowForm.speed" :max="ttsSource === 'ali' ? 500 : 100" :min="ttsSource === 'ali' ? -500 : 0" :placeholder="ttsSource === 'ali' ? '-500～500' : '0～100'" :step="2" style="width: 100%;"/>
+                                    <el-input-number v-if="ttsSource === 'jd'" v-model="flowForm.speed" :max="20" :min="5" placeholder="5~20" :step="0.1" style="width: 100%;"/>
+                                    <el-input-number v-else v-model="flowForm.speed" :max="ttsSource === 'ali' ? 500 : 100" :min="ttsSource === 'ali' ? -500 : 0" :placeholder="ttsSource === 'ali' ? '-500～500' : '0～100'" :step="2" style="width: 100%;"/>
                                 </el-form-item>
                             </el-col>
-                            <el-col v-if="ttsSource === 'ali'" :span="12">
+                            <el-col v-if="ttsSource !== 'mt'" :span="12">
                                 <el-form-item label="语调">
-                                    <el-input-number v-model="flowForm.intonation" :max="500" :min="-500" :step="2" placeholder="-500~500" style="width: 100%;"/>
+                                    <el-input-number v-if="ttsSource === 'jd'" v-model="flowForm.intonation" :max="100" :min="-100" :step="1" placeholder="-100~100" style="width: 100%;"/>
+                                    <el-input-number v-else v-model="flowForm.intonation" :max="500" :min="-500" :step="2" placeholder="-500~500" style="width: 100%;"/>
                                 </el-form-item>
                             </el-col>
                             <el-col :span="12">
                                 <el-form-item label="音量" prop="volume">
-                                    <el-input-number v-model="flowForm.volume" :min="0" :max="100" :step="2" placeholder="0~100" style="width: 100%;"/>
+                                    <el-input-number v-if="ttsSource === 'jd'" v-model="flowForm.volume" :min="5" :max="100" :step="1" placeholder="5~100" style="width: 100%;"/>
+                                    <el-input-number v-else v-model="flowForm.volume" :min="0" :max="100" :step="2" placeholder="0~100" style="width: 100%;"/>
                                 </el-form-item>
                             </el-col>
                             <el-col :span="24">
                                 <el-form-item label="试听内容">
                                     <el-input v-model="flowForm.auditionContent" type="textarea"  placeholder="最多可输入300个字" :maxlength="300" :rows="3" />
-                                    <AuditionTimbre :params="flowForm" type="ivr" :tts="ttsSource" :base-url="baseUrl" />
                                 </el-form-item>
                             </el-col>
                         </el-row>
@@ -208,9 +260,9 @@
         <flow-info v-if="flowInfoVisible" ref="flowInfo" :data="data" @saveCode="editDataInfo"></flow-info>
         <flow-help v-if="flowHelpVisible" ref="flowHelp"></flow-help>
         <!-- 流程图名称 -->
-        <el-dialog title="基本信息" :visible.sync="titDialog" append-to-body width="400px" class="hBg index3000">
+        <el-dialog title="基本信息" :visible.sync="titDialog" append-to-body width="400px" class="hBg">
             <el-form ref="flowForm" :model="flowForm" :rules="rules">
-                <el-form-item label="模版名称" prop="name">
+                <el-form-item label="模板名称" prop="name">
                     <el-input v-model="flowForm.name" />
                 </el-form-item>
                 <el-form-item label="备注">
@@ -223,8 +275,8 @@
             </div>
         </el-dialog>
         <!-- 添加参数弹出框 -->
-        <el-dialog v-if="paramDialog" :title="dialogTit" :visible.sync="paramDialog" append-to-body width="800px" class="hBg index3000">
-            <el-form ref="paramForm" :model="paramForm" :rules="paramRules" label-width="80px" style="padding: 10px 20px;">
+        <el-dialog v-if="paramDialog" :title="dialogTit" :visible.sync="paramDialog" append-to-body width="800px" class="hBg">
+            <el-form ref="paramForm" :model="paramForm" :rules="paramRules" :label-width="$isXs || !isZh ? '' : '80px'" style="padding: 10px 20px;">
                 <el-row v-if="paramType !== 'mapVal'" :gutter="20">
                     <el-col :span="12" :xs="24">
                         <el-form-item label="名称" prop="name">
@@ -253,7 +305,7 @@
                     </el-col>
                 </el-row>
                 <div>
-                    <h4 style="margin: 0 0 20px 25px; color: #589ef8;">映射值</h4>
+                    <h4 :style="$isXs ? 'margin-bottom: 20px; color: #589ef8;' : 'margin: 0 0 20px 25px; color: #589ef8;'">映射值</h4>
                     <el-row v-for="(item, index) of paramForm.mapVal" :key="index" class="callTime" :gutter="25">
                         <el-col :span="12">
                             <el-form-item>
@@ -293,10 +345,9 @@
     import FlowHelp from './help'
     import FlowNodeForm from './node_form'
     import ScriptContent from './script_content'
-    import { ForceDirected } from './force-directed'
     import { creatIvr, editIvr, getIvrData } from '@/api/ivrManage'
     import { cloneDeep, findLastIndex, assign, merge } from 'lodash'
-    import { getGatewayGroupId, getSkills, getParamType, getTimbre, getTemList } from '@/api/common'
+    import { getGatewayGroupId, getSkills, getParamType, getTimbre, getTemList, getLainList, getIvrList } from '@/api/common'
     import AuditionTimbre from './AuditionTimbre'
     export default {
         props: {
@@ -328,6 +379,10 @@
                 flowTit: '新增流程',
                 // jsPlumb 实例
                 jsPlumb: null,
+                // 断开前的连线实例
+                renderConn: null,
+                // 是否是拖拽删除
+                isDragDel: false,
                 // 控制画布销毁
                 easyFlowVisible: true,
                 // 控制流程数据显示与隐藏
@@ -365,10 +420,12 @@
                     // 节点话术
                     nodeAudioText: '',
                     nodeAudioSrc: '',
+                    nodeAudioId: '',
                     // 按键错误
                     errAudioText: '',
                     errAudioSrc: '',
-                    errTriggerNum: 1,
+                    errAudioId: '',
+                    errTriggerNum: 3,
                     keyErrorEvent: 'HANG_UP',
                     // 开启出参
                     outputParamInfo: []
@@ -386,8 +443,12 @@
                 },
                 // 转接
                 transferNode: {
+                    ruleType: '',
+                    ruleList: [],
+                    urk: '',
+                    urn: '',
                     bridgeType: 'robot',
-                    bridgeId: '',
+                    bridgeId: ''
                 },
                 // 判断节点
                 judgeNode: {
@@ -410,6 +471,20 @@
                         ]
                     },
                 },
+                // 韵达接口判断节点
+                yunDaNode: {
+                    apiUrl: '',
+                    bridgeId: '',
+                    bridgeType: 'gw'
+                },
+                // 收号节点
+                receiveCodeNode: {
+                    noInputJudgeDuration: 5,
+                    keyReceivingType: 0,
+                    keyReceivingLength: undefined,
+                    urk: '',
+                    urn: ''
+                },
                 // 标题表单
                 flowForm: {
                     name: '',
@@ -422,18 +497,37 @@
                     noInputJudgeDuration: 500,
                     keyErrorText: '',
                     keyErrorPath: '',
+                    keyErrorId: '',
                     keyErrorEvent: 'HANG_UP',
                     keyErrorNumber: 1,
                     eventAudioFile: '',
                     eventAudioText: '',
+                    eventAudioId: '',
+                    // noRespText: '',
+                    // noRespPath: '',
+                    // noRespNodeRepeat: 1,
+                    // noRespEvent: 0,
                     params: [],
-                    auditionContent: '您好，这里是音色试听，您好，这里是音色试听'
+                    auditionContent: '您好，这里是音色试听，您好，这里是音色试听',
+                    eventTransferType: 'robot',
+                    eventTransferBusinessId: ''
                 },
                 titDialog: false,
                 // 展开收起右侧表单
                 rightOpen: false,
                 // tab切换
                 activeName: 'flow',
+                marks: {
+                    '0': '0%',
+                    '100': '100%',
+                    '200': '200%',
+                    '300': {
+                        style: {
+                            width: '50px'
+                        },
+                        label: '300%'
+                    }
+                },
                 // 参数弹框开关
                 paramDialog: false,
                 // 参数弹框标题
@@ -460,12 +554,18 @@
                 flowList: [],
                 // 技能组
                 groups: [],
+                // 分机组
+                extensionGroups: [],
                 // 语音通知
                 noticeList: [],
+                // ivr
+                ivrList: [],
                 // 参数类型
                 typeList: [],
                 nodeName: '',
-                timbres: []
+                timbres: [],
+                lainList: [],
+                openTts: 1
             }
         },
         // 一些基础配置移动该文件中
@@ -511,6 +611,12 @@
             }
         },
         computed: {
+            isMd() {
+                return window.innerWidth < 1200
+            },
+            isLg() {
+                return window.innerWidth < 1640
+            },
             rules() {
                 const validateNum = (rule, value, callback, text) => {
                     if (value < 0 || value > 100) {
@@ -519,9 +625,23 @@
                         callback()
                     }
                 }
+                const validateNumJd = (rule, value, callback, text) => {
+                    if (value < 5 || value > 100) {
+                        callback(new Error('音量范围5～100'))
+                    } else {
+                        callback()
+                    }
+                }
                 const validatePitch = (rule, value, callback) => {
                     if (value < -500 || value > 500) {
                         callback(new Error('语调范围-500～500'))
+                    } else {
+                        callback()
+                    }
+                }
+                const validatePitchJd = (rule, value, callback) => {
+                    if (value < -100 || value > 100) {
+                        callback(new Error('语调范围-100～100'))
                     } else {
                         callback()
                     }
@@ -540,19 +660,30 @@
                         callback()
                     }
                 }
+                const validateSpeedJd = (rule, value, callback) => {
+                    if (value < 5 || value > 20) {
+                        callback(new Error('语速范围5~20'))
+                    } else {
+                        callback()
+                    }
+                }
                 return {
                     name: [
                         { required: true, message: '请输入表单名称', trigger: 'blur' }
                     ],
-                    volume: [
-                        { validator: validateNum, trigger: 'blur'}
+                    volume: [this.ttsSource === 'jd'
+                         ? { validator: validateNumJd, trigger: 'blur'}
+                         : { validator: validateNum, trigger: 'blur'}
                     ],
-                    intonation: [
-                        { validator: validatePitch, trigger: 'blur'}
+                    intonation: [this.ttsSource === 'jd'
+                        ? { validator: validatePitchJd, trigger: 'blur'}
+                        : { validator: validatePitch, trigger: 'blur'}
                     ],
                     speed: [this.ttsSource === 'ali'
                         ? { validator: validateSpeed, trigger: 'blur'}
-                        : { validator: validateSpeedMt, trigger: 'blur'}
+                        : this.ttsSource === 'mt'
+                            ? { validator: validateSpeedMt, trigger: 'blur'}
+                            : { validator: validateSpeedJd, trigger: 'blur'}
                     ]
                 }
             }
@@ -562,15 +693,23 @@
             if (localStorage?.userInfo) {
                 const userInfo = JSON.parse(localStorage.userInfo)
                 if (userInfo.ttsSource) this.ttsSource = userInfo.ttsSource
-                if (this.ttsSource === 'mt') this.flowForm.speed = 50
+                this.openTts = userInfo.openTts ?? 1
+                if (this.ttsSource === 'mt') {
+                    this.flowForm.speed = 50
+                } else if (this.ttsSource === 'jd') {
+                    this.flowForm.speed = 10
+                }
             }
             !this.state && this.initSpeaker()
             this.jsPlumb = jsPlumb.getInstance()
             this.getGatewayGroup()
             this.getGroup(true)
             this.getGroup(false)
+            this.getIvrList()
+            this.getExtensionGroup()
             this.getNotice()
             this.getParamType()
+            this.getLainData()
             if (this.id) {
                 this.renderIvr()
             } else {
@@ -584,7 +723,22 @@
             initSpeaker() {
                 getTimbre(this.baseUrl).then(res => {
                     this.timbres = res.data
-                    this.flowForm.speaker = res.data[0].code
+                    this.flowForm.speaker = res.data[0]?.code
+                })
+            },
+            // 获取铃音列表
+            getLainData() {
+                getLainList(this.baseUrl, {
+                    pageNo: 1,
+                    pageSize: -1
+                }).then(res => {
+                    this.lainList = res.data.records
+                })
+            },
+            // 获取ivr
+            getIvrList() {
+                getIvrList(this.baseUrl).then(res => {
+                    this.ivrList = res.data
                 })
             },
             // 获取网关组id
@@ -603,6 +757,19 @@
                         this.flowList = res.data
                     } else {
                         this.groups = res.data
+                    }
+                })
+            },
+            // 获取技能组
+            getExtensionGroup() {
+                getSkills(this.baseUrl, {
+                    companyId: localStorage.companyId,
+                    type: 4
+                }).then(res => {
+                    if (res.data) {
+                        this.extensionGroups = res.data
+                    } else {
+                        this.$message.warning('分机组查询失败')
                     }
                 })
             },
@@ -772,6 +939,10 @@
                 if (this.activeElement.type === 'node') {
                     this.deleteNode(this.activeElement.nodeId, this.activeElement.nodeName)
                 } else if (this.activeElement.type === 'line') {
+                    // if (this.activeElement.sourceId === '0') {
+                    //     this.$message.error('开始节点的连线不可删除')
+                    //     return
+                    // }
                     this.$confirm('确定删除所点击的线吗?', '提示', {
                         confirmButtonText: '确定',
                         cancelButtonText: '取消',
@@ -814,7 +985,7 @@
             },
             // 判断是否已有开始节点
             hasStart() {
-                const mark = this.data.nodeList.some(node => node.type === 'start')
+                const mark = this.data.nodeList.some(node => node.type === 'root')
                 return mark
             },
             nodeField(node, nodeMenu) {
@@ -824,6 +995,8 @@
                     case 'leaveMsg': nodeObj = {...node, ...this.msgNode}; break
                     case 'transfer': nodeObj = {...node, ...this.transferNode, ...this.infoNode}; break
                     case 'judge': nodeObj = {...node, ...this.judgeNode}; break
+                    case 'yunDa': nodeObj = {...node, ...this.yunDaNode }; break
+                    case 'collectionNumber': nodeObj = {...node, ...this.receiveCodeNode}; break
                 }
                 return nodeObj
             },
@@ -834,7 +1007,7 @@
              * @param mousePosition 鼠标拖拽结束的坐标
              */
             addNode(evt, nodeMenu, mousePosition) {
-                if (nodeMenu.type === 'start') {
+                if (nodeMenu.type === 'root') {
                     let mark = this.hasStart()
                     if (mark) {
                         this.$message.warning('只能有一个开始节点')
@@ -855,7 +1028,7 @@
                 // 居中
                 left -= 85
                 top -= 16
-                var nodeId = nodeMenu.type==='start' ? '0' : this.getUUID()
+                var nodeId = nodeMenu.type === 'root' ? '0' : this.getUUID()
                 // 动态生成名字
                 var origName = nodeMenu.name
                 var nodeName = origName
@@ -886,15 +1059,19 @@
                     // 节点话术
                     nodeAudioText: '',
                     nodeAudioSrc: '',
+                    nodeAudioId: '',
                     // 按键错误
                     errAudioText: '',
                     errAudioSrc: '',
+                    errAudioId: '',
                     errTriggerNum: 1,
                     keyErrorEvent: 'HANG_UP',
                     // 开启出参
                     outputParamInfo: []
                 }
-                if (nodeMenu.type !== 'start' && nodeMenu.type !== 'end' && nodeMenu.type !== 'keyInteraction') {
+                if (nodeMenu.type !== 'start' && nodeMenu.type !== 'end'
+                    && nodeMenu.type !== 'keyInteraction' && nodeMenu.type !== 'moreTalk'
+                    && node.type !== 'root') {
                     node = this.nodeField(node, nodeMenu)
                 }
                 /**
@@ -969,6 +1146,16 @@
                 }
                 return false
             },
+            // 是否已有开始节点的连线
+            hasRootLine(from) {
+                for (let node of this.data.nodeList) {
+                    if (node.id === '0' && node.type === 'start') return false
+                }
+                for (let line of this.data.lineList) {
+                    if (line.from === '0' && from === '0') return true
+                }
+                return false
+            },
             // 是否含有相反的线
             hashOppositeLine(from, to) {
                 return this.hasLine(to, from)
@@ -998,7 +1185,14 @@
             // 加载流程图
             dataReload(data) {
                 this.easyFlowVisible = false
-                this.data.nodeList = []
+                this.data.nodeList = [
+                    {
+                        "id": "0",
+                        "type": "root",
+                        "left": "311px",
+                        "top": "83px"
+                    }
+                ]
                 this.data.lineList = []
                 this.$nextTick(() => {
                     data = cloneDeep(data)
@@ -1069,47 +1263,81 @@
             closeDetailDialog() {
                 this.$emit('onClose')
             },
+            // 校验起始节点连线
+            validateRootLine(rootIds) {
+                if (!rootIds.length) {
+                    this.$message.error('开始节点必须有一条指向下级的连线')
+                    return false
+                }
+                return true
+            },
+            isContentCheck(item) {
+                if (item.type !== 'judge'
+                    && item.type !== 'infoCollection'
+                    && item.type !== 'root') {
+                    return true
+                }
+                return false
+            },
             // 校验流程图是否正确
             validateFlow() {
                 // 存放连线对象里的to，然后比对nodeList，判断是否有连线
                 const lineIds = []
-                // 存放end节点的id，用于对比连线是否指向结束节点
-                const endIds = []
+                // 存放连线里的起始节点id，用来判断起始节点有且必须只有一条连线
+                const rootIds = []
                 // 存放判断节点id 判断节点必须两根线连向后两个节点
                 const judgeIdMap = {}
+                // 判断是否是之前的数据
+                let hasRoot = false
                 // 校验标志
                 let vMark = false
                 for (let item of this.data.nodeList) {
-                    if (item.type === 'end') endIds.push(item.id)
-                    if (item.type === 'judge') judgeIdMap[item.id] = 0
+                    if (item.type === 'judge' || item.type === 'collectionNumber') judgeIdMap[item.id] = 0
+                    if (item.type === 'root') hasRoot = true
                 }
                 for (let line of this.data.lineList) {
                     if (!line.label) {
-                        let mark = endIds.includes(line.to)
-                        if (!mark) {
+                        if (line.from !== '0') {
                             vMark = true
-                            this.$message.error('除结束节点外，其他连线必需要设置按键')
+                            this.jsPlumb.select({source: line.from, target: line.to}).setPaintStyle({stroke: '#f56c6c'})
+                            this.$message.error('除开始节点外，其他连线必需要设置按键')
                             return false
                         }
                     }
                     if (typeof judgeIdMap[line.from] == 'number') judgeIdMap[line.from] ++
                     lineIds.push(line.to)
+                    line.from === '0' && rootIds.push(line.form)
                 }
+                if (hasRoot && !this.validateRootLine(rootIds)) return
                 for (let item of this.data.nodeList) {
-                    if (!item.nodeAudioText && !item.nodeAudioSrc && item.type != 'judge') {
-                        vMark = true
-                        this.$message.error('所有节点的话术内容与录音内容至少有一项不能为空')
-                        return false
+                    if (this.openTts) {
+                        if (!item.nodeAudioText && !item.nodeAudioSrc && this.isContentCheck(item)) {
+                            vMark = true
+                            item.state = 'error'
+                            this.$message.error(`${item.name}节点的话术内容与录音内容至少有一项不能为空`)
+                            return
+                        }
+                    } else {
+                        if (!item.nodeAudioSrc && this.isContentCheck(item)) {
+                            vMark = true
+                            item.state = 'error'
+                            this.$message.error(`${item.name}节点的录音不能为空`)
+                            return
+                        }
                     }
                     let mark = lineIds.includes(item.id)
-                    if (!mark && item.type !== 'start') {
+                    if (
+                        (hasRoot && !mark && item.type !='root')
+                        || (!hasRoot && !mark && item.type !='start' && item.type !='yunDa' && item.type !='judge'))
+                    {
                         vMark = true
                         this.$message.error(item.name + '节点没有连线')
                         return false
                     }
-                    if (item.type == 'judge' && judgeIdMap[item.id] != 2) {
+                    if ((item.type == 'judge' || item.type == 'collectionNumber') && judgeIdMap[item.id] != 2) {
                         vMark = true
-                        this.$message.error(`判断节点: ${item.name}, 必须连接两个节点`)
+                        const nodeName = item.type == 'judge' ? '判断节点' : '收号节点'
+                        this.$message.error(`${nodeName}: 【${item.name}】必须连接两个节点`)
                         return false
                     }
                 }
@@ -1117,10 +1345,10 @@
             },
             // 保存流程
             saveFlow() {
-                if (this.data.nodeList.length > 0 && this.data.lineList.length > 0) {
+                if ((this.data.nodeList.length > 0 && this.data.lineList.length > 0) || (this.data.nodeList.length > 0 &&this.data.nodeList[0].type === 'yunDa')) {
                     this.validateFlow()
                 } else {
-                    this.$message.error('请配置流程图后保存')
+                    this.$message.error('请配置完整的流程图后保存')
                 }
             },
             // 将开始节点的id设为0
@@ -1136,19 +1364,35 @@
                     if (item.from === startId) item.from = '0'
                 })
             },
+            getAudioIds(params) {
+                const audioIds = []
+                for (let node of this.data.nodeList) {
+                    node.nodeAudioId && audioIds.push(node.nodeAudioId)
+                    node.errAudioId && audioIds.push(node.errAudioId)
+                }
+                params.keyErrorId && audioIds.push(params.keyErrorId)
+                params.eventAudioId && audioIds.push(params.eventAudioId)
+                return audioIds.join(',')
+            },
             titSubmit() {
                 this.$refs.flowForm.validate(valid => {
                     if (valid) {
                         this.loading = true
                         const params = Object.assign({}, this.flowForm)
-                        this.initStartId()
+                        // this.initStartId()
                         for (let i = 0; i < this.data.lineList.length; i++) {
                             let line = this.data.lineList[i]
                             line.label = {
                                 '是': 'Y',
                                 '否': 'N',
                                 '任意键': '-1',
-                                '直接跳转': '-2'
+                                '直接跳转': '-2',
+                                '完成订单': 'ORDER',
+                                '订单无法完成': 'ORDERFAIL',
+                                '转人工': 'MANUAL',
+                                '系统错误': 'SERVERERROR',
+                                '成功': 'SUCCESSFUL',
+                                '失败': 'FAILED'
                             }[line.label] || line.label
                         }
                         params.content = JSON.stringify(this.data)
@@ -1158,13 +1402,14 @@
                         if (params.keyErrorPath && params.keyErrorText) {
                             params.keyErrorText = ''
                         }
+                        params.audioIds = this.getAudioIds(params)
                         delete params.param
                         if (this.state === 'edit') {
                             if (this.id) {
                                 editIvr(this.baseUrl, this.id, params).then(() => {
                                     this.$message.success('编辑成功')
                                     this.titDialog = false
-                                    this.$emit('onSave', res.data)
+                                    this.$emit('onSave')
                                     this.loading = false
                                 }).catch(() => {
                                     this.loading = false
@@ -1173,10 +1418,10 @@
                                 this.$message.error('未获取到ID')
                             }
                         } else {
-                            creatIvr(this.baseUrl, params).then(res => {
+                            creatIvr(this.baseUrl, params).then(() => {
                                 this.$message.success('保存成功')
                                 this.titDialog = false
-                                this.$emit('onSave', res.data)
+                                this.$emit('onSave')
                                 this.loading = false
                             }).catch(() => {
                                 this.loading = false
@@ -1191,7 +1436,6 @@
             getParamType() {
                 getParamType(this.baseUrl).then(res => {
                     this.typeList = res.data
-                    // this.paramForm.dataType = res.data[0].fieldType
                 })
             },
             // 展开收起右侧表单
@@ -1330,8 +1574,16 @@
             // 处理默认字段
             handleNode(flowData) {
                 const list = []
+                if (!flowData.nodeList.length) {
+                    flowData.nodeList.push({
+                        "id": "0",
+                        "type": "root",
+                        "left": "311px",
+                        "top": "83px"
+                    })
+                }
                 for (let item of flowData.nodeList) {
-                    item = Object.assign({}, this.initNode, item)
+                    if (item.type !== 'root') item = Object.assign({}, this.initNode, item)
                     list.push(item)
                 }
                 flowData.nodeList = list
@@ -1356,7 +1608,13 @@
                             'Y': '是',
                             'N': '否',
                             '-1': '任意键',
-                            '-2': '直接跳转'
+                            '-2': '直接跳转',
+                            'ORDER': '完成订单' ,
+                            'ORDERFAIL': '订单无法完成',
+                            'MANUAL': '转人工',
+                            'SERVERERROR': '系统错误',
+                            'SUCCESSFUL': '成功',
+                            'FAILED': '失败'
                         }[line.label] || line.label
                     }
                     this.flowTit = data.name
@@ -1396,16 +1654,6 @@
     display: flex;
     justify-content: space-between;
 }
-.callTime {
-    position: relative;
-    .timeIcon {
-        width: 20px;
-        height: 40px;
-        position: absolute;
-        right: -20px;
-        top: 3px;
-    }
-}
 .ivrTabs {
     height: 42px;
     padding-left: 50px;
@@ -1430,7 +1678,16 @@
     background-color: #fafafa;
 }
 .rightForm {
-    width: 400px;
+    width: 600px;
+}
+.rightW300 {
+    width: 300px;
+}
+.rightW420 {
+    width: 420px;
+}
+.rightW600 {
+    width: 600px;
 }
 .noWidth {
     width: 0;

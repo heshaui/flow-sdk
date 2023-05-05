@@ -2,11 +2,11 @@
 IVR流程编辑器
 ### 获取sdk
 ```
-npm install weihu-flow-dk
+npm install weihu-flow-sdk
 ```
 ### 引入
 ```js
-import flowSdk from 'flow-sdk'
+import flowSdk from 'weihu-flow-sdk'
 ```
 或者
 ```html
@@ -14,7 +14,7 @@ import flowSdk from 'flow-sdk'
 ```
 ### 快速使用
 ```js
-import flowSdk from 'flow-sdk'
+import flowSdk from 'weihu-flow-sdk'
 
 flowSDK.init({
       el: 'flowsdk',         // 挂载的元素的id，必传

@@ -20,7 +20,7 @@
 <script>
 import axios from 'axios'
 import { downMethod } from './utils'
-import { aliTimbres, mtTimbres } from './timbre'
+import { aliTimbres, mtTimbres, jdTimbres } from './timbre'
 export default {
     name: 'AuditionTimbre',
     props: {
@@ -77,16 +77,26 @@ export default {
         playAudio() {
             const params = this.setParams()
             if (!params.volume && params.volume !== 0) {
-                this.$message.error('请输入音量，音量范围0～100')
+                if (this.tts === 'jd') {
+                    this.$message.error('请输入音量，音量范围5～100')
+                } else {
+                    this.$message.error('请输入音量，音量范围0～100')
+                }
                 return false
-            } else if (this.tts === 'ali' && !params.pitch && params.pitch !== 0) {
-                this.$message.error('请输入语调，语调范围-500～500')
+            } else if (this.tts !== 'mt' && !params.pitch && params.pitch !== 0) {
+                if (this.tts === 'jd') {
+                    this.$message.error('请输入语调，语调范围-100～100')
+                } else {
+                    this.$message.error('请输入语调，语调范围-500～500')
+                }
                 return false
             } else if (!params.speech && params.speech !== 0) {
                 if (this.tts === 'ali') {
                     this.$message.error('请输入语速，语速范围-500～500')
-                } else {
+                } else if (this.tts === 'mt') {
                     this.$message.error('请输入语速，语速范围0～100')
+                } else {
+                    this.$message.error('请输入语速，语速范围5～20')
                 }
                 return false
             }
@@ -113,10 +123,10 @@ export default {
             })
         },
         getName(params) {
-            const timbres = [...aliTimbres, ...mtTimbres]
+            const timbres = [...aliTimbres, ...mtTimbres, ...jdTimbres]
             let name = ''
             timbres.forEach(item => {
-                if (item.val === params.voice) name = `${item.label}.mp3`
+                if (item.val === params.voice) name = this.tts === 'jd' ? `${item.label}.wav` : `${item.label}.mp3`
             })
             return name
         },
@@ -138,10 +148,19 @@ export default {
             }
         },
         downAudio() {
+            const info = this.$message({
+                type: 'info',
+                message: '正在下载音色，请耐心等待！',
+                duration: 0,
+                showClose: true
+            })
             const params = this.setParams()
-            const url = `${this.baseUrl}/obc/api/tts/voice/download?token=${params.token}&volume=${params.volume}&pitch=${params.pitch}&speech=${params.speech}&voice=${params.voice}&text=${params.text}`
+            const url = `${this.baseUrl}/tts/voice/download?token=${params.token}&volume=${params.volume}&pitch=${params.pitch}&speech=${params.speech}&voice=${params.voice}&text=${encodeURIComponent(params.text)}`
             const name = this.getName(params)
             this.downloadFile(url, name)
+            setTimeout(() => {
+                info.close()
+            }, 3000)
         }
     }
 }

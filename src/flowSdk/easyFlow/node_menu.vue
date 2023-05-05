@@ -45,54 +45,59 @@
                         ico: 'el-icon-video-pause',
                         open: true,
                         children: [
-                             {
+                            // {
+                            //     id: '0',
+                            //     type: 'root',
+                            //     name: '起始节点',
+                            //     ico: 'el-icon-video-play'
+                            // },
+                            {
                                 id: '11',
                                 type: 'start',
                                 name: '开场白',
-                                ico: 'el-icon-video-play',
-                                style: {}
+                                ico: 'el-icon-video-play'
                             },
                             {
                                 id: '12',
                                 type: 'keyInteraction',
                                 name: '按键交互',
-                                ico: 'el-icon-link',
-                                style: {}
+                                ico: 'el-icon-link'
                             },
                             {
                                 id: '13',
                                 type: 'infoCollection',
-                                name: '信息收集',
-                                ico: 'el-icon-postcard',
-                                style: {}
+                                name: '接口调用',
+                                ico: 'el-icon-postcard'
+                            },
+                            {
+                                id: '20',
+                                type: 'collectionNumber',
+                                name: '收号节点',
+                                ico: 'el-icon-edit-outline'
                             },
                             {
                                 id: '15',
                                 type: 'leaveMsg',
                                 name: '留言',
-                                ico: 'el-icon-chat-dot-square',
-                                style: {}
+                                ico: 'el-icon-chat-dot-square'
                             },
                             {
                                 id: '16',
                                 type: 'transfer',
                                 name: '转接',
-                                ico: 'el-icon-connection',
-                                style: {}
+                                ico: 'el-icon-connection'
                             },
                             {
                                 id: '17',
                                 type: 'judge',
                                 name: '判断',
-                                ico: 'el-icon-share',
-                                style: {}
+                                ico: 'el-icon-share'
                             },
                             {
                                 id: '14',
                                 type: 'end',
                                 name: '结束语',
-                                ico: 'el-icon-switch-button',
-                                style: {}
+                                ico: 'el-icon-switch-button'
                             }
                         ]
                     },
@@ -141,8 +146,34 @@
                     event.stopPropagation();
                 }
             }
+            this.initMoreTalk()
+            this.initYunDa()
         },
         methods: {
+            // 是否开启多轮对话
+            initMoreTalk() {
+                const userInfo = JSON.parse(localStorage.userInfo)
+                const moreTalkOpen = userInfo.openMultipleRoundsDialogue ?? 0
+                const params = {
+                    id: '18',
+                    type: 'moreTalk',
+                    name: '多轮对话',
+                    ico: 'el-icon-sort'
+                }
+                moreTalkOpen && this.menuList[0].children.splice(this.menuList[0].children.length-1, 0, params)
+            },
+            // 是否开启韵达接口判断
+            initYunDa() {
+                const userInfo = JSON.parse(localStorage.userInfo)
+                const yunDaOpen = userInfo.openCustomizationNode ?? 0
+                const params = {
+                    id: '19',
+                    type: 'yunDa',
+                    name: '韵达接口判断',
+                    ico: 'el-icon-set-up'
+                }
+                yunDaOpen && this.menuList[0].children.splice(this.menuList[0].children.length-1, 0, params)
+            },
             // 根据类型获取左侧菜单对象
             getMenuByType(type) {
                 for (let i = 0; i < this.menuList.length; i++) {

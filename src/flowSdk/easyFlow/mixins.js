@@ -12,14 +12,15 @@ export const easyFlowMixin = {
                 // Connector: ['Flowchart', {stub: 30, gap: 1, alwaysRespectStubs: false, midpoint: 0.5, cornerRadius: 10}],
                 // Connector: ['StateMachine', {margin: 5, curviness: 10, proximityLimit: 80}],
                 // 鼠标不能拖动删除线
-                ConnectionsDetachable: false,
+                ConnectionsDetachable: true,
                 // 删除线的时候节点不删除
                 DeleteEndpointsOnDetach: false,
+                zIndex: 1,
                 /**
                  * 连线的两端端点类型：圆形
                  * radius: 圆的半径，越大圆越大
                  */
-                // Endpoint: ['Dot', {radius: 5, cssClass: 'ef-dot', hoverClass: 'ef-dot-hover'}],
+                Endpoint: ['Dot', {radius: 20, cssClass: 'ef-dot', hoverClass: 'ef-dot-hover'}],
                 /**
                  * 连线的两端端点类型：矩形
                  * height: 矩形的高
@@ -33,14 +34,15 @@ export const easyFlowMixin = {
                 /**
                  * 空白端点
                  */
-                Endpoint: ['Blank', {Overlays: ''}],
+                // Endpoint: ['Blank', {Overlays: ''}],
                 // Endpoints: [['Dot', {radius: 5, cssClass: 'ef-dot', hoverClass: 'ef-dot-hover'}], ['Rectangle', {height: 20, width: 20, cssClass: 'ef-rectangle', hoverClass: 'ef-rectangle-hover'}]],
                 /**
                  * 连线的两端端点样式
                  * fill: 颜色值，如：#12aabb，为空不显示
                  * outlineWidth: 外边线宽度
                  */
-                EndpointStyle: {fill: '#1879ffa1', outlineWidth: 1},
+                // EndpointStyle: {fill: '#1879ffa1', outlineWidth: 1},
+                EndpointStyle: {fill: '', outlineWidth: 1},
                 // 是否打开jsPlumb的内部日志记录
                 LogEnabled: true,
                 /**
@@ -84,8 +86,8 @@ export const easyFlowMixin = {
                 ],
                 // 绘制图的模式 svg、canvas
                 RenderMode: 'svg',
-                // 鼠标滑过线的样式
-                HoverPaintStyle: {stroke: '#b0b2b5', strokeWidth: 1},
+                // 鼠标滑过线的样式 #b0b2b5
+                HoverPaintStyle: {stroke: '#409eff', strokeWidth: 2},
                 // 滑过锚点效果
                 // EndpointHoverStyle: {fill: 'red'}
                 Scope: 'jsPlumb_DefaultScope' // 范围，具有相同scope的点才可连接

@@ -7,180 +7,279 @@
             <div class="ef-node-form-body">
                 <el-form :model="node" ref="dataForm" :rules="dataRules" v-show="type === 'node'">
                     <el-tabs v-model="activeName">
-                        <el-tab-pane label="入参设置" name="first">
-                            <el-form-item label="节点名称">
-                                <el-input v-model="node.name" maxlength="20"></el-input>
+                        <el-tab-pane label="节点信息设置" name="first">
+                            <el-form-item label="节点名称" prop="name" label-width="80px">
+                                <el-input v-model="node.name" style="width: 193px;" placeholder="请输入节点名称" maxlength="20"></el-input>
                             </el-form-item>
                             <script-content
-                                v-if="node.type != 'judge'"
+                                v-if="showContent()"
+                                ref="textChild"
                                 :form="{
                                     src: node.nodeAudioSrc,
-                                    text: node.nodeAudioText
+                                    text: node.nodeAudioText,
+                                    id: node.nodeAudioId
                                 }"
+                                :isRequired="node.nodeAudioSrc ? false : true"
                                 :params="params"
+                                :lain-list="lainList"
+                                :baseUrl="baseUrl"
                                 @success="src => node.nodeAudioSrc = src"
-                                @delAudio="node.nodeAudioSrc = ''"
+                                @delAudio="node.nodeAudioSrc = ''; node.nodeAudioId=''"
                                 @changeText="text => node.nodeAudioText = text"
+                                @getAudio="data => {node.nodeAudioSrc=data.src; node.nodeAudioId=data.id}"
+                                @getLainId="id => node.nodeAudioId=id"
                             />
                             <!-- 转接 -->
-                            <div v-show="node.type==='transfer'">
-                                <el-form-item label="转接类型">
-                                    <el-select v-model="node.bridgeType" style="width: 100%;" @change="node.bridgeId=''">
-                                        <el-option label="机器人" value="robot" />
-                                        <el-option label="语音通知" value="notice" />
-                                        <el-option label="技能组" value="group" />
-                                        <el-option label="网关组" value="gw" />
-                                        <el-option label="指定技能组" value="customGroup" />
+                            <div v-if="node.type==='transfer'">
+                                <el-form-item label="转接规则" label-width="96px">
+                                    <el-select v-model="node.ruleType" style="width: 100%;" @change="ruleTypeChange">
+                                        <el-option label="全部" value="" />
+                                        <el-option label="按CRM信息" value="crmRule" />
+                                        <el-option label="按归属地" value="ascriptionPlaceRule" />
+                                        <el-option label="按URL请求" value="urlRule" />
+                                        <el-option label="按收号信息" value="ivrParamsRule" />
                                     </el-select>
                                 </el-form-item>
-                                <el-form-item v-if="node.bridgeType === 'gw'" label="网关组" prop="bridgeId">
-                                    <el-select v-model="node.bridgeId" filterable placeholder="请选择" style="width: 100%;">
-                                        <el-option v-for="(v, key) in gatewayGroup" :key="key" :label="v.name" :value="v.id" />
-                                    </el-select>
-                                </el-form-item>
-                                <el-form-item v-if="node.bridgeType === 'robot'" label="流程名称" prop="bridgeId">
-                                    <el-select v-model="node.bridgeId" filterable placeholder="请选择" style="width: 100%;">
-                                        <el-option v-for="(v, key) in flowList" :key="key" :label="v.name" :value="v.id" />
-                                    </el-select>
-                                </el-form-item>
-                                <el-form-item v-if="node.bridgeType === 'group'" label="技能组" prop="bridgeId">
-                                    <el-select v-model="node.bridgeId" filterable placeholder="请选择" style="width: 100%;">
-                                        <el-option v-for="(v, key) in groups" :key="key" :label="v.name" :value="v.id" />
-                                    </el-select>
-                                </el-form-item>
-                                <el-form-item v-if="node.bridgeType === 'customGroup'" label="默认技能组" prop="bridgeId">
-                                    <el-select v-model="node.bridgeId" filterable placeholder="请选择" style="width: 100%;">
-                                        <el-option v-for="(v, key) in groups" :key="key" :label="v.name" :value="v.id" />
-                                    </el-select>
-                                </el-form-item>
-                                <!-- <el-form-item v-if="node.bridgeType === 'agent'" label="座席" prop="bridgeId">
-                                    <el-select v-model="node.bridgeId" filterable placeholder="请选择" style="width: 100%;">
-                                        <el-option v-for="(v, key) in agentList" :key="key" :label="v.agentName ? `${v.agentNumber}(${v.agentName})` : v.agentNumber" :value="v.id" />
-                                    </el-select>
-                                </el-form-item> -->
-                                <el-form-item v-if="node.bridgeType === 'notice'" label="语音通知" prop="bridgeId">
-                                    <el-select v-model="node.bridgeId" filterable placeholder="请选择" style="width: 100%;">
-                                        <el-option v-for="(v, key) in noticeList" :key="key" :label="v.name" :value="v.templateSn" />
-                                    </el-select>
-                                </el-form-item>
-                                <p v-if="node.bridgeType === 'customGroup'" style="font-size: 12px; color: #888; margin-top: -15px; text-align: justify;">系统会根据接口返回值，转接对应的技能组，返回失败则会选用默认技能组</p>
+                                <el-row :gutter="20" style="margin-bottom: 15px;">
+                                    <el-col :span="12">
+                                        <el-form-item label="默认转接类型" label-width="96px">
+                                            <el-select v-model="node.bridgeType" style="width: 100%;" @change="node.bridgeId=''">
+                                                <el-option label="机器人" value="robot" />
+                                                <el-option label="语音通知" value="notice" />
+                                                <el-option label="技能组" value="group" />
+                                                <el-option label="网关组" value="gw" />
+                                                <el-option label="ivr" value="ivr" />
+                                                <el-option label="下一级节点" value="subordinateNode" />
+                                                <el-option label="分机组" value="extension" />
+                                            </el-select>
+                                        </el-form-item>
+                                    </el-col>
+                                    <el-col v-if="node.bridgeType !== 'subordinateNode'" :span="12">
+                                        <el-form-item label="默认转接目标" prop="bridgeId" label-width="110px">
+                                            <el-select v-show="node.bridgeType === 'gw'" v-model="node.bridgeId" filterable placeholder="请选择" style="width: 100%;">
+                                                <el-option v-for="(v, key) in gatewayGroup" :key="key" :label="v.name" :value="v.id" />
+                                            </el-select>
+                                            <el-select v-show="node.bridgeType === 'robot'" v-model="node.bridgeId" filterable placeholder="请选择" style="width: 100%;">
+                                                <el-option v-for="(v, key) in flowList" :key="key" :label="v.name" :value="v.id" />
+                                            </el-select>
+                                            <el-select v-show="node.bridgeType === 'group'" v-model="node.bridgeId" filterable placeholder="请选择" style="width: 100%;">
+                                                <el-option v-for="(v, key) in groups" :key="key" :label="v.name" :value="v.id" />
+                                            </el-select>
+                                            <el-select v-show="node.bridgeType === 'extension'" v-model="node.bridgeId" filterable placeholder="请选择" style="width: 100%;">
+                                                <el-option v-for="(v, key) in extensionGroups" :key="key" :label="v.name" :value="v.id" />
+                                            </el-select>
+                                            <el-select v-show="node.bridgeType === 'notice'" v-model="node.bridgeId" filterable placeholder="请选择" style="width: 100%;">
+                                                <el-option v-for="(v, key) in noticeList" :key="key" :label="v.name" :value="v.templateSn" />
+                                            </el-select>
+                                            <el-select v-show="node.bridgeType === 'ivr'" v-model="node.bridgeId" filterable placeholder="请选择" style="width: 100%;">
+                                                <el-option style="width: 200px;" v-for="(v, key) in ivrList" :key="key" :label="v.name" :value="v.id" />
+                                            </el-select>
+                                        </el-form-item>
+                                    </el-col>
+                                </el-row>
+                                <p v-show="node.ruleType === 'crmRule'" class="pTip">系统根据CRM字段信息中的值设定的转接类型进行转接，未涉及字段和值则会选用默认转接类型。</p>
+                                <p v-show="node.ruleType === 'ascriptionPlaceRule'" class="pTip">系统会根据设定归属地对应的转接类型进行转接，未涉及归属地则会选用默认转接类型。</p>
+                                <p v-show="node.ruleType === 'urlRule'" class="pTip">系统会根据接口返回值，转接对应的转接类型，返回失败则会选用默认转接目标。</p>
+                                <p v-show="node.ruleType === 'ivrParamsRule'" class="pTip">系统根据变量信息中的值设定的转接类型进行转接，未涉及字段和值则会选用默认转接类型。</p>
                             </div>
                             <!-- 留言 -->
                             <div v-if="node.type === 'leaveMsg'">
-                                <el-form-item label="录音时长(秒)">
-                                    <el-input placeholder="请输入录音时长(秒)" v-model="node.recordingDuration" />
+                                <el-form-item label="录音时长(秒)" prop="recordingDuration" label-width="96px">
+                                    <el-input-number placeholder="请输入录音时长(秒)" v-model.number="node.recordingDuration" :controls="false" style="width: 150px; margin-right: 10px;" />
+                                    <span style="color: #409eff;">录音时长默认15秒</span>
                                 </el-form-item>
-                                <div style="margin-bottom: 20px; color: #409eff;">录音时长默认15秒</div>
                             </div>
-                            <!-- 信息收集 -->
-                            <div v-if="node.type==='infoCollection'">
-                                <el-form-item label="输入信息" prop="regularExpression" style="margin: 0;">
+                            <!-- 收号节点 -->
+                            <!-- <div v-if="node.type==='infoCollection'">
+                                <el-form-item label="输入信息" prop="regularExpression" :style="!node.nodeAudioSrc ? 'margin: -20px 0 0px;' : 'margin: 0;'">
                                     <el-input v-model="node.regularExpression" type="textarea" maxlength="200" rows="3"></el-input>
                                 </el-form-item>
                                 <p style="line-height: 25px;">提示：支持正则表达式，例如：固定号码：^1000$，批量号码：^(10[0-9][0-9])$，所有号码：^(.*)$，7位以上号码：^(.{7,})$等等</p>
+                            </div> -->
+                            <div v-if="node.type==='collectionNumber'">
+                                <script-content
+                                    ref="errTextChild"
+                                    label="按键错误/超时提示"
+                                    placeholder="请输入按键错误/超时提示"
+                                    :form="{
+                                        src: node.errAudioSrc,
+                                        text: node.errAudioText,
+                                        id: node.errAudioId
+                                    }"
+                                    :isRequired="node.errAudioSrc ? false : true"
+                                    :params="params"
+                                    :lain-list="lainList"
+                                    :baseUrl="baseUrl"
+                                    @success="src => node.errAudioSrc = src"
+                                    @delAudio="node.errAudioSrc = '';node.errAudioId=''"
+                                    @changeText="text => node.errAudioText = text"
+                                    @getAudio="data => {node.errAudioSrc=data.src; node.errAudioId=data.id}"
+                                    @getLainId="id => node.errAudioId=id"
+                                />
+                                <el-form-item label="最大收号失败次数" label-width="136px" prop="errTriggerNum">
+                                    <el-input-number v-model="node.errTriggerNum" :precision="0" :controls="false" :min="1"/>
+                                </el-form-item>
+                                <el-form-item label="输入超时时长" label-width="136px" prop="noInputJudgeDuration">
+                                    <el-input-number v-model="node.noInputJudgeDuration" :precision="0" :controls="false" :min="1"/> 秒
+                                </el-form-item>
+                                <el-form-item label="接收数值长度" label-width="136px" required>
+                                    <el-select v-model="node.keyReceivingType" style="width: 180px; margin-right: 10px;">
+                                        <el-option label="固定长度" :value="0" />
+                                        <el-option label="最大长度" :value="1" />
+                                        <el-option label="正则表达式" :value="2" />
+                                    </el-select>
+                                    <el-form-item v-if="node.keyReceivingType == 2" :rules="[{ required: true, message: '正则表达式不能为空'}]" prop="keyReceivingLength" style="display: inline-block;">
+                                        <el-input v-model="node.keyReceivingLength" />
+                                    </el-form-item>
+                                    <el-form-item v-else prop="keyReceivingLength" style="display: inline-block;">
+                                        <el-input-number v-model="node.keyReceivingLength" :precision="0" :controls="false" :min="1" :max="128"/> 位
+                                    </el-form-item>
+                                </el-form-item>
+                                <p v-show="node.keyReceivingType === 0" class="pTip">固定长度适合接收固定位数的数值，数值输入达到固定位数后，自动进入下一环节</p>
+                                <p v-show="node.keyReceivingType === 1" class="pTip">最大长度适合接收不超过设定的数值位数，数值输入完以#号键结束（提示音可提示输入#号按）</p>
+                                <el-form-item label="存储到变量" label-width="136px">
+                                    <el-input v-model="node.urn" placeholder="请输入字段名称(中文名称)" maxlength="20" style="width: 180px; margin-right: 10px;" />
+                                    <el-input v-model="node.urk" placeholder="请输入参数名称(英文名称)" maxlength="20" style="width: 180px;" />
+                                </el-form-item>
                             </div>
                             <!-- 信息收集与转接 -->
-                            <div v-if="node.type==='infoCollection' || (node.type==='transfer' && node.bridgeType === 'customGroup')">
-                                <el-form-item label="接口请求地址" label-width="100px">
+                            <div v-if="node.type==='infoCollection' || node.type==='transfer'">
+                                <el-form-item v-if="node.type==='infoCollection' || node.ruleType === 'urlRule'" label="接口请求地址" label-width="110px" prop="apiUrl">
                                     <el-input v-model="node.apiUrl" placeholder="请输入接口请求地址" />
                                 </el-form-item>
-                                <el-form-item label="入参" label-width="40px">
-                                    <!-- 添加参数按钮 -->
-                                    <el-row>
-                                        <el-col :span="24" align="right">
-                                            <el-dropdown @command="addInfoP($event, 'input')">
-                                                <el-button size="mini" type="primary">
-                                                    添加入参<i class="el-icon-arrow-down el-icon--right"></i>
-                                                </el-button>
-                                                <el-dropdown-menu slot="dropdown">
-                                                    <el-dropdown-item command="1">系统参数</el-dropdown-item>
-                                                    <el-dropdown-item command="2">自定义</el-dropdown-item>
-                                                </el-dropdown-menu>
-                                            </el-dropdown>
-                                        </el-col>
-                                    </el-row>
-                                </el-form-item>
-                                <el-table
-                                    v-if="node.inputParamInfo && node.inputParamInfo.length > 0"
-                                    :data="node.inputParamInfo"
-                                    stripe
-                                    style="margin-bottom: 10px;"
-                                >
-                                    <el-table-column prop="name" label="参数名称" min-width="80px" align="center">
-                                        <template slot-scope="scope">
-                                            <el-input v-if="scope.row.ctype == 2" v-model="scope.row.name" size="small" placeholder="请输入参数名称" @change="fieldValid($event, scope.row, 'oldInputParams', 'name', '入参中文')" />
-                                            <el-select v-else v-model="scope.row.name" size="small" placeholder="请选择" @change="nameChange($event, scope.row)">
-                                                <el-option v-for="(item, key) of infoParams" :key="`info_${key}`" :label="item.label" :value="item.label" :disabled="item.disabled" />
-                                            </el-select>
-                                        </template>
-                                    </el-table-column>
-                                    <el-table-column prop="variable" label="英文名称" min-width="80px" align="center">
-                                        <template slot-scope="scope">
-                                            <el-input  v-if="scope.row.ctype == 2" v-model="scope.row.variable" size="small" placeholder="请输入英文名称" @change="fieldValid($event, scope.row, 'oldInputParams', 'variable', '入参英文')" />
-                                            <span v-else > {{ scope.row.variable }} </span>
-                                        </template>
-                                    </el-table-column>
-                                    <el-table-column prop="value" label="参数值" min-width="80px" align="center">
-                                        <template slot-scope="scope">
-                                            <el-input  v-if="scope.row.ctype == 2" v-model="scope.row.value" size="small" placeholder="请输入参数值" />
-                                            <span v-else ></span>
-                                        </template>
-                                    </el-table-column>
-                                    <el-table-column prop="" label="操作" width="50px" align="center" fixed="right">
-                                        <template slot-scope="scope">
-                                            <i class="el-icon-delete" @click="delInfoP(scope.row.id)" style="font-size: 16px; color: #f56c6c;"></i>
-                                        </template>
-                                    </el-table-column>
-                                </el-table>
-                                <el-form-item label="出参" label-width="40px">
-                                    <!-- 添加参数按钮 -->
-                                    <el-row>
-                                        <el-col :span="24" align="right">
-                                            <el-dropdown @command="addInfoP($event, 'out')">
-                                                <el-button size="mini" type="primary">
-                                                    添加出参<i class="el-icon-arrow-down el-icon--right"></i>
-                                                </el-button>
-                                                <el-dropdown-menu slot="dropdown">
-                                                    <el-dropdown-item command="1">系统参数</el-dropdown-item>
-                                                    <el-dropdown-item command="2">自定义</el-dropdown-item>
-                                                </el-dropdown-menu>
-                                            </el-dropdown>
-                                        </el-col>
-                                    </el-row>
-                                </el-form-item>
-                                <el-table
-                                    v-if="node.outputParamInfo && node.outputParamInfo.length > 0"
-                                    :data="node.outputParamInfo"
-                                    stripe
-                                    style="margin-bottom: 15px;"
-                                >
-                                    <el-table-column prop="name" label="参数名称" min-width="80px" align="center">
-                                        <template slot-scope="scope">
-                                            <span v-if="!scope.row.ctype" > {{ scope.row.name }} </span>
-                                            <el-input v-else-if="scope.row.ctype == 2" v-model="scope.row.name" size="small" placeholder="请输入参数名称" @change="fieldValid($event, scope.row, 'oldOutputParams', 'name', '出参中文')" />
-                                            <el-select v-else v-model="scope.row.name" size="small" placeholder="请选择"  @change="outNameChange($event, scope.row)">
-                                                <el-option v-for="(item, key) of comOutParams" :key="`info_${key}`" :label="item.name" :value="item.name" :disabled="item.disabled" />
-                                            </el-select>
-                                        </template>
-                                    </el-table-column>
-                                    <el-table-column prop="variable" label="英文名称" min-width="80px" align="center">
-                                        <template slot-scope="scope">
-                                            <el-input  v-if="scope.row.ctype == 2" v-model="scope.row.variable" size="small" placeholder="请输入英文名称" @change="fieldValid($event, scope.row, 'oldOutputParams', 'variable', '出参英文')" />
-                                            <span v-else > {{ scope.row.variable }} </span>
-                                        </template>
-                                    </el-table-column>
-                                    <el-table-column prop="value" label="参数值" min-width="80px" align="center">
-                                        <template slot-scope="scope">
-                                            <el-input v-if="scope.row.ctype" v-model="scope.row.value" size="small" placeholder="请输入参数值" />
-                                            <span v-else > {{ scope.row.value }} </span>
-                                        </template>
-                                    </el-table-column>
-                                    <el-table-column prop="" label="操作" width="50px" fixed="right" align="center">
-                                        <template slot-scope="scope">
-                                            <i v-if="scope.row.ctype" class="el-icon-delete" @click="deleteParam(scope.row.id)" style="font-size: 16px; color: #f56c6c;"></i>
-                                        </template>
-                                    </el-table-column>
-                                </el-table>
+                                <el-row v-show="node.ruleType === 'urlRule'" :gutter="20">
+                                    <el-col :span=12>
+                                        <el-form-item label="字段名称" label-width="70px">
+                                            <el-input v-model="node.urn" placeholder="请输入字段名称" maxlength="20"></el-input>
+                                        </el-form-item>
+                                    </el-col>
+                                    <el-col :span=12>
+                                        <el-form-item label="参数名称" label-width="70px">
+                                            <el-input v-model="node.urk" placeholder="请输入参数名称" maxlength="20"></el-input>
+                                        </el-form-item>
+                                    </el-col>
+                                </el-row>
+                                <RuleList
+                                    v-if="node.type==='transfer' && node.ruleType !== ''"
+                                    :list="node.ruleList"
+                                    :params="params"
+                                    :gatewayGroup="gatewayGroup"
+                                    :flowList="flowList"
+                                    :groups="groups"
+                                    :extensionGroups="extensionGroups"
+                                    :noticeList="noticeList"
+                                    :lain-list="lainList"
+                                    :baseUrl="baseUrl"
+                                    :ivrList="ivrList"
+                                    :type="node.ruleType"
+                                    :receiveCodes="receiveCodes"
+                                    @getRuleList="list => node.ruleList = list"
+                                />
+                                <div v-show="node.type==='infoCollection' || node.ruleType === 'urlRule'">
+                                    <el-form-item label="入参" label-width="40px">
+                                        <!-- 添加参数按钮 -->
+                                        <el-row>
+                                            <el-col :span="24" align="right">
+                                                <el-dropdown @command="addInfoP($event, 'input')">
+                                                    <el-button size="mini" type="primary">
+                                                        添加入参<i class="el-icon-arrow-down el-icon--right"></i>
+                                                    </el-button>
+                                                    <el-dropdown-menu slot="dropdown">
+                                                        <el-dropdown-item command="1">系统参数</el-dropdown-item>
+                                                        <el-dropdown-item command="3">收号信息</el-dropdown-item>
+                                                        <el-dropdown-item command="2">自定义</el-dropdown-item>
+                                                    </el-dropdown-menu>
+                                                </el-dropdown>
+                                            </el-col>
+                                        </el-row>
+                                    </el-form-item>
+                                    <el-table
+                                        v-if="node.inputParamInfo && node.inputParamInfo.length > 0"
+                                        :data="node.inputParamInfo"
+                                        stripe
+                                        style="margin-bottom: 10px;"
+                                    >
+                                        <el-table-column prop="name" label="参数名称" min-width="80px" align="center">
+                                            <template slot-scope="scope">
+                                                <el-input v-if="scope.row.ctype == 2" v-model="scope.row.name" size="small" placeholder="请输入参数名称" @change="fieldValid($event, scope.row, 'oldInputParams', 'name', '入参中文')" />
+                                                <el-select v-if="scope.row.ctype == 1" v-model="scope.row.name" size="small" placeholder="请选择" @change="nameChange($event, scope.row, infoParams)">
+                                                    <el-option v-for="(item, key) of infoParams" :key="`info_${key}`" :label="item.name" :value="item.name" :disabled="item.disabled" />
+                                                </el-select>
+                                                <el-select v-if="scope.row.ctype == 3" v-model="scope.row.name" size="small" placeholder="请选择" @change="nameChange($event, scope.row, receiveCodes)">
+                                                    <el-option v-for="(item, key) of receiveCodes" :key="`info_${key}`" :label="item.name" :value="item.name" :disabled="item.disabled" />
+                                                </el-select>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column prop="variable" label="英文名称" min-width="80px" align="center">
+                                            <template slot-scope="scope">
+                                                <el-input  v-if="scope.row.ctype == 2" v-model="scope.row.variable" size="small" placeholder="请输入英文名称" @change="fieldValid($event, scope.row, 'oldInputParams', 'variable', '入参英文')" />
+                                                <span v-else > {{ scope.row.variable }} </span>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column prop="value" label="参数值" min-width="80px" align="center">
+                                            <template slot-scope="scope">
+                                                <el-input  v-if="scope.row.ctype == 2" v-model="scope.row.value" size="small" placeholder="请输入参数值" />
+                                                <span v-else ></span>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column prop="" label="操作" width="50px" align="center" fixed="right">
+                                            <template slot-scope="scope">
+                                                <i class="el-icon-delete" @click="delInfoP(scope.row.id)" style="font-size: 16px; color: #f56c6c;"></i>
+                                            </template>
+                                        </el-table-column>
+                                    </el-table>
+                                </div>
+                                <div v-show="node.type==='infoCollection' || node.ruleType !== ''">
+                                    <el-form-item label="出参" label-width="40px">
+                                        <!-- 添加参数按钮 -->
+                                        <el-row>
+                                            <el-col :span="24" align="right">
+                                                <el-dropdown @command="addInfoP($event, 'out')">
+                                                    <el-button size="mini" type="primary">
+                                                        添加出参<i class="el-icon-arrow-down el-icon--right"></i>
+                                                    </el-button>
+                                                    <el-dropdown-menu slot="dropdown">
+                                                        <el-dropdown-item command="1">系统参数</el-dropdown-item>
+                                                        <el-dropdown-item command="2">自定义</el-dropdown-item>
+                                                    </el-dropdown-menu>
+                                                </el-dropdown>
+                                            </el-col>
+                                        </el-row>
+                                    </el-form-item>
+                                    <el-table
+                                        v-if="node.outputParamInfo && node.outputParamInfo.length > 0"
+                                        :data="node.outputParamInfo"
+                                        stripe
+                                        style="margin-bottom: 15px;"
+                                    >
+                                        <el-table-column prop="name" label="参数名称" min-width="80px" align="center">
+                                            <template slot-scope="scope">
+                                                <span v-if="!scope.row.ctype" > {{ scope.row.name }} </span>
+                                                <el-input v-else-if="scope.row.ctype == 2" v-model="scope.row.name" size="small" placeholder="请输入参数名称" @change="fieldValid($event, scope.row, 'oldOutputParams', 'name', '出参中文')" />
+                                                <el-select v-else v-model="scope.row.name" size="small" placeholder="请选择"  @change="nameChange($event, scope.row, comOutParams)">
+                                                    <el-option v-for="(item, key) of comOutParams" :key="`info_${key}`" :label="item.name" :value="item.name" :disabled="item.disabled" />
+                                                </el-select>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column prop="variable" label="英文名称" min-width="80px" align="center">
+                                            <template slot-scope="scope">
+                                                <el-input  v-if="scope.row.ctype == 2" v-model="scope.row.variable" size="small" placeholder="请输入英文名称" @change="fieldValid($event, scope.row, 'oldOutputParams', 'variable', '出参英文')" />
+                                                <span v-else > {{ scope.row.variable }} </span>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column prop="value" label="参数值" min-width="80px" align="center">
+                                            <template slot-scope="scope">
+                                                <el-input v-if="scope.row.ctype" v-model="scope.row.value" size="small" placeholder="请输入参数值" />
+                                                <span v-else > {{ scope.row.value }} </span>
+                                            </template>
+                                        </el-table-column>
+                                        <el-table-column prop="" label="操作" width="50px" fixed="right" align="center">
+                                            <template slot-scope="scope">
+                                                <i v-if="scope.row.ctype" class="el-icon-delete" @click="deleteParam(scope.row.id)" style="font-size: 16px; color: #f56c6c;"></i>
+                                            </template>
+                                        </el-table-column>
+                                    </el-table>
+                                </div>
                             </div>
                             <!-- 判断 -->
                             <div v-if="node.type === 'judge'">
@@ -224,7 +323,36 @@
                                     </div>
                                 </div>
                             </div>
-                            <div v-if="node.type !== 'judge' && node.type !=='infoCollection' && node.type!=='transfer'">
+                            <!-- 韵达判断 -->
+                            <div v-if="node.type === 'yunDa'">
+                                <el-form-item label="接口请求地址" label-width="100px">
+                                    <el-input v-model="node.apiUrl" placeholder="请输入接口请求地址" />
+                                </el-form-item>
+                                <script-content
+                                    ref="textChild"
+                                    :form="{
+                                        src: node.nodeAudioSrc,
+                                        text: node.nodeAudioText,
+                                        id: node.nodeAudioId
+                                    }"
+                                    :isRequired="node.nodeAudioSrc ? false : true"
+                                    :params="params"
+                                    :lain-list="lainList"
+                                    :baseUrl="baseUrl"
+                                    placeholder="请输入接口请求失败后的话术内容"
+                                    @success="src => node.nodeAudioSrc = src"
+                                    @delAudio="node.nodeAudioSrc = ''; node.nodeAudioId=''"
+                                    @changeText="text => node.nodeAudioText = text"
+                                    @getAudio="data => {node.nodeAudioSrc=data.src; node.nodeAudioId=data.id}"
+                                    @getLainId="id => node.nodeAudioId=id"
+                                />
+                                <el-form-item label="网关组" label-width="56px">
+                                    <el-select v-model="node.bridgeId" filterable placeholder="请选择">
+                                        <el-option v-for="(v, key) in gatewayGroup" :key="key" :label="v.name" :value="v.id" />
+                                    </el-select>
+                                </el-form-item>
+                            </div>
+                            <div v-if="showComParams()" >
                                 <el-button type="primary" size="small" @click="addParam" icon="el-icon-plus">添加参数</el-button>
                                 <div v-for="param in node.outputParamInfo" :key="param.id" class="flex-box">
                                     <el-form-item label="参数名称">
@@ -239,7 +367,7 @@
                                 </div>
                             </div>
                         </el-tab-pane>
-                        <el-tab-pane label="异常处理" name="second">
+                        <el-tab-pane v-if="false" label="异常处理" name="second">
                             <h3>按键错误</h3>
                             <el-form-item label="连续触发次数">
                                 <el-input-number v-model="node.errTriggerNum" :min="1"/>
@@ -247,12 +375,17 @@
                             <script-content
                                 :form="{
                                     src: node.errAudioSrc,
-                                    text: node.errAudioText
+                                    text: node.errAudioText,
+                                    id: node.errAudioId
                                 }"
                                 :params="params"
+                                :lain-list="lainList"
+                                :baseUrl="baseUrl"
                                 @success="src => node.errAudioSrc = src"
-                                @delAudio="node.errAudioSrc = ''"
+                                @delAudio="node.errAudioSrc = '';node.errAudioId=''"
                                 @changeText="text => node.errAudioText = text"
+                                @getAudio="data => {node.errAudioSrc=data.src; node.errAudioId=data.id}"
+                                @getLainId="id => node.errAudioId=id"
                             />
                             <el-form-item label="超出次数，执行">
                                 <el-select v-model="node.keyErrorEvent">
@@ -297,12 +430,12 @@
                             </el-option>
                         </el-select>
                     </el-form-item> -->
-                    <el-form-item align="center">
+                    <el-form-item align="center" label-width="0" style="margin-top: 20px;">
                         <el-button v-if="node.id" type="primary" icon="el-icon-check"  @click="save(false)">保存</el-button>
                     </el-form-item>
                 </el-form>
-                <el-form :model="line" ref="dataForm" v-show="type === 'line'">
-                    <el-form-item label="按键值">
+                <el-form :model="line">
+                    <el-form-item v-show="type === 'line'" label="按键值">
                         <el-select v-model="line.label" style="width: 100%;" @change="saveLine">
                             <el-option label="1" value="1" />
                             <el-option label="2" value="2" />
@@ -320,12 +453,29 @@
                             <el-option label="直接跳转" value="直接跳转" />
                         </el-select>
                     </el-form-item>
-                </el-form>
-                <el-form :model="line" ref="dataForm" v-show="type === 'judgeLine'">
-                    <el-form-item label="判断分支">
+                    <el-form-item v-show="type === 'transferLine'" label="按键值">
+                        <el-select v-model="line.label" style="width: 100%;" @change="saveLine">
+                            <el-option label="直接跳转" value="直接跳转" />
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item v-show="type === 'judgeLine'" label="判断分支">
                         <el-select v-model="line.label" style="width: 100%;" @change="saveLine">
                             <el-option label="是" value="是" />
                             <el-option label="否" value="否" />
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item v-show="type === 'shLine'" label="收号节点">
+                        <el-select v-model="line.label" style="width: 100%;" @change="saveLine">
+                            <el-option label="成功" value="成功" />
+                            <el-option label="失败" value="失败" />
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item v-show="type === 'mtLine'" label="多轮对话">
+                        <el-select v-model="line.label" style="width: 100%;" @change="saveLine">
+                            <el-option label="完成订单" value="完成订单" />
+                            <el-option label="订单无法完成" value="订单无法完成" />
+                            <el-option label="转人工" value="转人工" />
+                            <el-option label="系统错误" value="系统错误" />
                         </el-select>
                     </el-form-item>
                 </el-form>
@@ -337,10 +487,11 @@
 
 <script>
     import { cloneDeep, findIndex } from 'lodash'
-    import { arrayGroupBy } from './utils'
+    import { arrayGroupBy, getFocus } from './utils'
     import ScriptContent from './script_content.vue'
+    import RuleList from './components/RuleList.vue'
     export default {
-        components: { ScriptContent },
+        components: { ScriptContent, RuleList },
         props: {
             nodeData: Object,
             params: Array,
@@ -357,10 +508,23 @@
                 type: Array,
                 default: () => []
             },
+            extensionGroups: {
+                type: Array,
+                default: () => []
+            },
             noticeList: {
                 type: Array,
                 default: () => []
-            }
+            },
+            lainList: {
+                type: Array,
+                default: () => []
+            },
+            ivrList: {
+                type: Array,
+                default: () => []
+            },
+            baseUrl: String
         },
         data() {
             const regValid = (rule, value, callback) => {
@@ -398,20 +562,30 @@
                     label: '运行中'
                 }],
                 infoParams: [
-                    { label: '主叫号码', val: 'caller', disabled: false },
-                    { label: '被叫号码', val: 'called', disabled: false },
-                    { label: '通话开始时间', val: 'createdTime', disabled: false },
-                    { label: '收键信息', val: 'collectResults', disabled: false }
+                    { name: '主叫号码', variable: 'caller', disabled: false },
+                    { name: '被叫号码', variable: 'called', disabled: false },
+                    { name: '通话开始时间', variable: 'createdTime', disabled: false },
+                    { name: '收键信息', variable: 'collectResults', disabled: false }
                 ],
-                dataRules: {
-                    regularExpression: { validator: regValid, trigger: 'blur' }
-                },
                 // 存放出入参
                 oldInputParams: [],
                 oldOutputParams: [],
                 comOutParams: [],
                 // 存放判断条件
-                oldJudgeType: []
+                oldJudgeType: [],
+                openTts: 1,
+                dataRules: {
+                    name: { required: true, message: '请输入节点名称', trigger: 'blur'},
+                    regularExpression: { validator: regValid, trigger: 'blur' },
+                    bridgeId: { required: true, message: '请选择默认转接目标', trigger: 'change'},
+                    recordingDuration: { type: 'number', message: '录音时长必须为数字值', trigger: 'blur'},
+                    keyReceivingLength: { required: true, message: '按键收集长度不能为空', trigger: 'blur'},
+                    noInputJudgeDuration: { required: true, message: '超时时长不能为空', trigger: 'blur'},
+                    errTriggerNum: { required: true, message: '失败次数不能为空', trigger: 'blur'},
+                    apiUrl: { required: true, message: '接口地址不能为空', trigger: 'blur'}
+                },
+                // 存放收号信息变量
+                receiveCodes: []
             }
         },
         watch: {
@@ -419,16 +593,50 @@
                 handler() {
                     this.comOutParams = cloneDeep(this.outParams)
                 },
-                immediate: true
+                deep: true
             }
         },
         mounted() {
             if (this.nodeData) this.data = this.nodeData
+            this.initForm()
         },
         methods: {
+            initForm() {
+                const userInfo = JSON.parse(localStorage.userInfo)
+                this.openTts = userInfo.openTts ?? 1
+            },
             isRequired(param) {
                 let _param = this.outParams.find(op => op.variable == param.name)
                 return (param.name && _param && _param.required)
+            },
+            // 是否显示对话内容
+            showContent() {
+                if (this.node.type != 'judge'
+                    && this.node.type != 'yunDa'
+                    && this.node.type !== 'infoCollection') {
+                    return true
+                }
+                return false
+            },
+            // 是否需要对话内容
+            contentCheck() {
+                if (this.node.type != 'judge'
+                    && this.node.type !== 'infoCollection') {
+                    return true
+                }
+                return false
+            },
+            // 是否显示添加参数
+            showComParams() {
+                if (this.node.type !== 'judge'
+                    && this.node.type !=='infoCollection'
+                    && this.node.type!=='transfer'
+                    && this.node.type!=='moreTalk'
+                    && this.node.type!=='yunDa'
+                    && this.node.type !== 'collectionNumber') {
+                    return true
+                }
+                return false
             },
             /**
              * 表单修改，这里可以根据传入的ID进行业务信息获取
@@ -442,10 +650,11 @@
                     if (!mark) return false
                 }
                 this.data = data
+                this.receiveCodes = []
                 data.nodeList.filter((node) => {
                     if (node.id === id) {
                         this.node = cloneDeep(node)
-                        this.$set(this.node, 'outputParamInfo', this.node.outputParamInfo?.length ?  this.node.outputParamInfo : this.node.type==='infoCollection' || this.node.type==='transfer' ? [
+                        this.$set(this.node, 'outputParamInfo', this.node.outputParamInfo?.length ?  this.node.outputParamInfo : this.node.type==='infoCollection' || (this.node.type==='transfer' && this.node.ruleType === 'urlRule') ? [
                             { name: '接口出参',  variable: 'result', value: '', id: new Date().getTime()}
                         ]: [])
                         if(this.node.type === 'judge') {
@@ -453,8 +662,21 @@
                             this.oldJudgeType = this.node.judgmentInfo.type
                         }
                     }
+                    if (node.type === 'collectionNumber' && node.urk && node.urn) {
+                        const mark = this.receiveCodes.findIndex(item => item.variable === node.urk)
+                        mark < 0 && this.receiveCodes.push({name: node.urn, variable: node.urk, disabled: false})
+                    }
                 })
                 return true
+            },
+            // 规则类型改变事件
+            ruleTypeChange(type) {
+                this.node.ruleList = []
+                if (type === 'urlRule') {
+                    this.node.outputParamInfo.unshift({ name: '接口出参',  variable: 'result', value: '', id: new Date().getTime()})
+                } else {
+                    this.node.outputParamInfo = this.node.outputParamInfo.filter(item =>  item.variable !== 'result' && item.name !== '接口出参')
+                }
             },
             // 初始化判断节点数据
             initJudge(jtype) {
@@ -489,6 +711,12 @@
                     let node = this.data.nodeList[i]
                     if (this.line.from == node.id && node.type == 'judge') {
                         this.type = 'judgeLine'
+                    } else if (this.line.from == node.id && node.type == 'moreTalk') {
+                        this.type = 'mtLine'
+                    } else if (this.line.from == node.id && (node.type === 'transfer' || node.type === 'infoCollection')) {
+                        this.type = 'transferLine'
+                    } else if (this.line.from === node.id && node.type == 'collectionNumber') {
+                        this.type = 'shLine'
                     }
                 }
                 this.labelList = this.labelGroup()
@@ -512,9 +740,14 @@
                     this.$message.info('无全局出参配置，请选择自定义')
                     return
                 }
+                if (ptype === 'input' && ctype == 3 && !this.receiveCodes.length) {
+                    this.$message.info('无收号信息参数，请选择自定义')
+                    return
+                }
                 this.oldInputParams = cloneDeep(this.node.inputParamInfo)
                 this.oldOutputParams = cloneDeep(this.node.outputParamInfo)
-                ctype == 1 && ptype == 'input' && this.infoPValid()
+                ctype == 2 && ptype == 'input' && this.infoPValid(this.infoParams)
+                ctype == 3 && ptype == 'input' && this.infoPValid(this.receiveCodes)
                 ctype == 1 && ptype == 'out' && this.outPValid()
                 const info = {
                     id: new Date().getTime(),
@@ -527,9 +760,9 @@
                 ptype === 'out' &&  this.node.outputParamInfo.push(info)
             },
             // 入参系统参数查重
-            infoPValid() {
-                for (let p of this.infoParams) {
-                    let mark = findIndex(this.node.inputParamInfo, item => item.name === p.label)
+            infoPValid(targetParams) {
+                for (let p of targetParams) {
+                    let mark = findIndex(this.node.inputParamInfo, item => item.name === p.name)
                     if (mark > -1) {
                         p.disabled = true
                     } else {
@@ -556,15 +789,8 @@
                     row[field] = ''
                 }
             },
-            nameChange(val, row) {
-                for(let item of this.infoParams) {
-                    if (val === item.label) {
-                        row.variable = item.val
-                    }
-                }
-            },
-            outNameChange(val, row) {
-                for(let item of this.outParams) {
+            nameChange(val, row, targetArr) {
+                for(let item of targetArr) {
                     if (val === item.name) row.variable = item.variable
                 }
             },
@@ -656,7 +882,40 @@
                     })
                 }
             },
+            // 校验数据
+            saveCheck() {
+                let mark = null
+                this.$refs.dataForm.validate(valid => {
+                    if (!valid) {
+                        mark = false
+                        getFocus()
+                    } else {
+                        this.$refs.dataForm.clearValidate()
+                        mark = true
+                    }
+                })
+                return mark
+            },
             save(noMsg) {
+                this.node.state = 'error'
+                this.data.nodeList.filter((node) => {
+                    if (node.id === this.node.id) {
+                        node.state = this.node.state
+                    }
+                })
+                if (this.contentCheck()) {
+                    if (!this.$refs.textChild.validateForm()) {
+                        getFocus()
+                        return
+                    }
+                }
+                if (this.node.type === 'collectionNumber') {
+                    if (!this.$refs.errTextChild.validateForm()) {
+                        getFocus()
+                        return
+                    }
+                }
+                if (!this.saveCheck()) return
                 try {
                     if (this.node.regularExpression && eval(`/${this.node.regularExpression}/`) instanceof RegExp === false ) {
                         this.$message.error('请输入正确的正则')
@@ -666,9 +925,16 @@
                     this.$message.error('请输入正确的正则')
                     return
                 }
-                if (!this.node.nodeAudioText && !this.node.nodeAudioSrc && this.node.type !== 'judge') {
-                    this.$message.error('话术内容与录音内容至少有一项不能为空')
-                    return
+                if (this.openTts) {
+                    if (!this.node.nodeAudioText && !this.node.nodeAudioSrc && this.contentCheck()) {
+                        this.$message.error('话术内容与录音内容至少有一项不能为空')
+                        return
+                    }
+                } else {
+                    if (!this.node.nodeAudioSrc && this.contentCheck()) {
+                        this.$message.error('录音不能为空')
+                        return
+                    }
                 }
                 this.node.name = this.node.name.trim()
                 if (!this.node.name) return this.$message.warning('请填写有效的节点名称')
@@ -690,25 +956,12 @@
                         }
                     }
                 }
-                // if (this.node.type == 'judge') {
-                //     for (let j = 0; j < this.node.judgeGroup.length; j++) {
-                //         let judge = this.node.judgeGroup[j]
-
-                //         if (judge.basis.length == 0) return this.$message.warning('最少需要有一个判断条件')
-
-                //         for (let i = 0; i < judge.basis.length; i++) {
-                //             let basis = judge.basis[i]
-                //             if (!basis.field || !basis.condition || !basis.target) {
-                //                 return this.$message.warning('请完善判断信息')
-                //             }
-                //         }
-                //     }
-                // }
                 if (this.node.type == 'leaveMsg') {
                     if (!(/^\d+$/.test(this.node.recordingDuration))) {
                         return this.$message.warning('录音时长只能填写数字')
                     }
                 }
+                this.node.state = 'success'
                 this.data.nodeList.filter((node) => {
                     if (node.id === this.node.id) {
                         node.name = this.node.name
@@ -718,8 +971,10 @@
                         node.state = this.node.state
                         node.nodeAudioText = this.node.nodeAudioText
                         node.nodeAudioSrc = this.node.nodeAudioSrc
+                        node.nodeAudioId = this.node.nodeAudioId
                         node.errAudioText = this.node.errAudioText
                         node.errAudioSrc = this.node.errAudioSrc
+                        node.errAudioId = this.node.errAudioId
                         node.errTriggerNum = this.node.errTriggerNum
                         node.keyErrorEvent = this.node.keyErrorEvent
                         node.outputParamInfo = cloneDeep(this.node.outputParamInfo)
@@ -736,10 +991,25 @@
                             case 'transfer':
                                 node.bridgeType = this.node.bridgeType
                                 node.bridgeId = this.node.bridgeId
+                                node.ruleType = this.node.ruleType
+                                node.ruleList = cloneDeep(this.node.ruleList)
+                                node.urn = this.node.urn
+                                node.urk = this.node.urk
                                 node.apiUrl =  this.node.apiUrl
                                 node.inputParamInfo = cloneDeep(this.node.inputParamInfo)
                                 break
                             case 'judge': node.judgmentInfo = cloneDeep(this.initJudge('stringify')); break
+                            case 'yunDa':
+                                node.apiUrl = this.node.apiUrl
+                                node.bridgeId = this.node.bridgeId
+                                break
+                            case 'collectionNumber':
+                                node.noInputJudgeDuration = this.node.noInputJudgeDuration
+                                node.keyReceivingType = this.node.keyReceivingType
+                                node.keyReceivingLength = this.node.keyReceivingLength
+                                node.urk = this.node.urk
+                                node.urn = this.node.urn
+                                node.keyErrorEvent = 'COLLECTION_FAILED'
                         }
                         this.$emit('repaintEverything')
                         !noMsg && this.$message.success('保存成功')
@@ -802,5 +1072,11 @@
     }
     .flex1 {
         flex: 0 1 150px;
+    }
+    .pTip {
+        font-size: 12px;
+        color: #888;
+        margin-top: -15px;
+        text-align: justify;
     }
 </style>

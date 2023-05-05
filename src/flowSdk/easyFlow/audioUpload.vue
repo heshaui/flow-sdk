@@ -1,23 +1,42 @@
 <template>
-    <el-upload ref="upload"
-               class="upload-music"
-               name="file"
-               action=""
-               :on-change="handleChange"
-               :before-upload="beforeUpload"
-               :on-success="handleSuccess"
-               :on-error="handleError"
-               :limit="1"
-               accept="audio/wav,audio/mp3"
-               :show-file-list="false"
-               :auto-upload="false"
-    >
-        <el-button size="mini" round type="primary" :loading="upload.loading">上传录音</el-button>
-    </el-upload>
+    <div style="display: inline-block; width: 192px;">
+        <!-- 插入参数 -->
+        <el-dropdown trigger="click" style="float: right; margin-left: 15px;" @command="selLain">
+            <el-button type="warning" plain round size="mini">
+                选择录音<i class="el-icon-arrow-down el-icon--right" />
+            </el-button>
+            <el-dropdown-menu slot="dropdown">
+                <el-dropdown-item v-for="v of lainList" :key="v.id" :command="v.id">{{ v.audioName }}</el-dropdown-item>
+                <el-dropdown-item v-if="!lainList.length">暂无数据</el-dropdown-item>
+            </el-dropdown-menu>
+        </el-dropdown>
+        <el-upload
+            ref="upload"
+            class="upload-music"
+            name="file"
+            action=""
+            :on-change="handleChange"
+            :before-upload="beforeUpload"
+            :on-success="handleSuccess"
+            :on-error="handleError"
+            :limit="1"
+            accept="audio/wav,audio/mp3"
+            :show-file-list="false"
+            :auto-upload="false"
+        >
+            <el-button size="mini" round type="primary" :loading="upload.loading">上传录音</el-button>
+        </el-upload>
+    </div>
 </template>
 <script>
 export default {
     name: 'AudioUpload',
+    props: {
+        lainList: {
+            type: Array,
+            default: () => []
+        }
+    },
     data() {
         return {
             upload: {
@@ -26,6 +45,13 @@ export default {
         }
     },
     methods: {
+        selLain(id) {
+            this.lainList.forEach(item => {
+                if (id === item.id) {
+                    this.$emit('selLain', {id: id, path: item.filePath})
+                }
+            })
+        },
         /*
         * 上传
         */

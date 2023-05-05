@@ -158,8 +158,38 @@ export function login(baseUrl, params) {
 }
 
 // 获取token
-export function getToken(params) {
+export function getToken(baseUrl, params) {
     return api.post('/obc/api/token', params, {
+        baseURL: baseUrl ? baseUrl : baseUrl_default
+    })
+}
+
+
+// 获取录音列表
+export function getLainList(baseUrl, params) {
+    return api.get('/obc/api/audio/queryList', { 
+        params,
+        baseURL: baseUrl ? baseUrl : baseUrl_default
+    })
+}
+
+// 保存铃音，url形式
+export function saveLain(baseUrl, params) {
+    return api.post('/obc/api/audio/save', params, {
+        baseURL: baseUrl ? baseUrl : baseUrl_default
+    })
+}
+
+// 上传录音，文件
+export function uploadLain(baseUrl, params) {
+    return api.post('/obc/api/audio/import', params, {
+        baseURL: baseUrl ? baseUrl : baseUrl_default
+    })
+}
+
+// 获取自定义字段
+export function getField(baseUrl) {
+    return api.get('/obc/api/customer/header', {
         baseURL: baseUrl ? baseUrl : baseUrl_default
     })
 }

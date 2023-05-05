@@ -64,6 +64,7 @@
     border: 1px solid #e0e3e7;
     border-radius: 5px;
     background-color: #fff;
+    z-index: 2;
 }
 .ef-node-container:hover {
     /* 设置移动样式 */
@@ -72,10 +73,49 @@
     border: 1px dashed #1879ff;
 }
 
+/* 起始节点 */
+.ef-node-root {
+    background-color: #409eff;
+    border-color: #409eff;
+    color: #fff;
+}
+.ef-node-root:hover {
+    /* 设置移动样式 */
+    background: #66b1ff;
+    border: 1px dashed #1879ff;
+    color: #fff;
+}
+.ef-node-root .ef-text {
+    width: 50%;
+    height: 100%;
+    margin: auto;
+    text-align: center;
+    line-height: 32px;
+    cursor: crosshair;
+}
+
+/* 错误节点 */
+.ef-node-err {
+    background-color: #f0f7ff;
+    border: 1px solid #f56c6c !important;
+}
+.ef-node-err .ef-node-left {
+    background-color: #f56c6c !important;
+}
+
 /* 节点激活样式 */
 .ef-node-active {
     background-color: #f0f7ff;
     border: 1px solid #1879ff;
+}
+
+/* 起始节点样式 */
+.ef-node-start {
+    background-color: #f0f7ff;
+    border: 1px solid #67c23a;
+}
+.ef-node-start .ef-node-left {
+    background-color: #67c23a;
 }
 
 /* 节点左侧的竖线 */
@@ -175,14 +215,15 @@
 
 /* label 为空的样式 */
 .ef-dot {
-    background-color: #1879ff;
-    border-radius: 10px;
+    background-color: transparent;
+    border-radius: 50%;
 }
 .ef-dot-hover {
-    background-color: red;
+    background-color: #409eff;
+    opacity: 0.1;
 }
 .ef-rectangle {
-    background-color: #1879ff;
+    background-color: #409eff;
 }
 .ef-rectangle-hover {
     background-color: red;

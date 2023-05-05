@@ -1,24 +1,24 @@
 <template>
     <div
-            ref="node"
-            :style="nodeContainerStyle"
-            @click="clickNode"
-            @contextmenu="rightClick($event)"
-            @mouseup="changeNodeSite"
-            :class="nodeContainerClass"
+        ref="node"
+        :style="nodeContainerStyle"
+        @click="clickNode"
+        @contextmenu="rightClick($event)"
+        @mouseup="changeNodeSite"
+        :class="nodeContainerClass"
     >
         <!-- 最左侧的那条竖线 -->
-        <div class="ef-node-left"></div>
+        <div v-if="node.type !== 'root'" class="ef-node-left"></div>
         <!-- 节点类型的图标 -->
-        <div class="ef-node-left-ico flow-node-drag">
+        <div v-if="node.type !== 'root'" class="ef-node-left-ico flow-node-drag">
             <i :class="nodeIcoClass"></i>
         </div>
         <!-- 节点名称 -->
-        <div class="ef-node-text" :show-overflow-tooltip="true">
-            {{node.name}}
+        <div :class="node.type === 'root' ? 'flow-node-drag ef-text' : 'ef-node-text'">
+            {{node.type === 'root' ? '开始' : node.name}}
         </div>
         <!-- 节点状态图标 -->
-        <div class="ef-node-right-ico">
+        <div v-if="node.type !== 'root'" class="ef-node-right-ico">
             <i class="el-icon-circle-check el-node-state-success" v-show="node.state === 'success'"></i>
             <i class="el-icon-circle-close el-node-state-error" v-show="node.state === 'error'"></i>
             <i class="el-icon-warning-outline el-node-state-warning" v-show="node.state === 'warning'"></i>
@@ -40,7 +40,9 @@
             nodeContainerClass() {
                 return {
                     'ef-node-container': true,
-                    'ef-node-active': this.activeElement.type == 'node' ? this.activeElement.nodeId === this.node.id : false
+                    'ef-node-active': this.activeElement.type == 'node' ? this.activeElement.nodeId === this.node.id : false,
+                    'ef-node-root': this.node.type === 'root',
+                    'ef-node-err': this.node.state === 'error'
                 }
             },
             // 节点容器样式
@@ -61,11 +63,11 @@
         methods: {
             // 点击节点
             clickNode() {
-                this.$emit('clickNode', this.node.id)
+                this.node.type !== 'root' && this.$emit('clickNode', this.node.id)
             },
             // 右键节点
             rightClick(event) {
-                this.$emit('rightClick', event, this.node.id)
+                this.node.type !== 'root' && this.$emit('rightClick', event, this.node.id)
             },
             // 鼠标移动后抬起
             changeNodeSite() {

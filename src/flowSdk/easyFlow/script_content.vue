@@ -1,34 +1,38 @@
 <template>
     <div>
-         <el-form-item :label="label">
-            <!-- 插入参数 -->
-            <el-dropdown v-if="!node.src" trigger="click" style="float: right; margin-left: 15px;" @command="insertParam">
-                <el-button type="primary" plain round size="mini">
-                    插入参数<i class="el-icon-arrow-down el-icon--right" />
-                </el-button>
-                <el-dropdown-menu slot="dropdown">
-                    <el-dropdown-item v-for="v of params" :key="v.variable" :command="v.variable">{{ v.name }}</el-dropdown-item>
-                    <el-dropdown-item v-if="params && params.length < 1">暂无数据</el-dropdown-item>
-                </el-dropdown-menu>
-            </el-dropdown>
-            <audio-upload ref="audioUpload" v-if="!node.src" style="margin-bottom: 10px; float: right;" class="upload-demo" type="node" @uploadSuccess="uploadSuccess"></audio-upload>
-            <el-input v-if="!node.src" v-model="node.text" type="textarea" maxlength="200" rows="3" @blur="getConPos($event)" @change="textChange"></el-input>
-        </el-form-item>
+        <el-form :model="node" ref="textForm" :rules="isRequired ? rules : {}">
+            <el-form-item :label="label" prop="text">
+                <!-- 插入参数 -->
+                <el-dropdown v-if="!node.src" trigger="click" style="float: right; margin-left: 15px;" @command="insertParam">
+                    <el-button v-if="openTts" type="primary" plain round size="mini">
+                        插入参数<i class="el-icon-arrow-down el-icon--right" />
+                    </el-button>
+                    <el-dropdown-menu slot="dropdown">
+                        <el-dropdown-item v-for="v of params" :key="v.variable" :command="v.variable">{{ v.name }}</el-dropdown-item>
+                        <el-dropdown-item v-if="params && params.length < 1">暂无数据</el-dropdown-item>
+                    </el-dropdown-menu>
+                </el-dropdown>
+                <audio-upload ref="audioUpload" v-if="!node.src" :style="openTts ? 'margin-bottom: 10px; float: right;' : ''" class="upload-demo" type="node" :lain-list="lainList" @uploadSuccess="uploadSuccess" @selLain="getAudio" ></audio-upload>
+                <el-input v-if="!node.src && openTts" v-model="node.text" :placeholder="placeholder" type="textarea" maxlength="200" rows="3" @blur="getConPos($event)" @change="textChange"></el-input>
+            </el-form-item>
+        </el-form>
         <!-- 音频 -->
         <div v-if="node.src" class="audioBox">
             <audio controls="controls" controlsList="nodownload" :src="audioSrc"/>
             <el-tooltip effect="light" placement="top" content="删除">
                 <i class="el-icon-delete" style="color: #f56c6c; font-size: 20px; margin-left: 10px;" @click="deleteAudio" />
             </el-tooltip>
+            <SaveLain v-show="!node.id" :baseUrl="baseUrl" :voice-path="node.src" size="svg" style="margin-left: 10px;" @getAudioId="getLainId"/>
         </div>
     </div>
 </template>
 
 <script>
 import { uploadFile } from '@/api/common'
+import SaveLain from './components/SaveLain'
 import AudioUpload from './audioUpload.vue'
 export default {
-    components: { AudioUpload },
+    components: {AudioUpload, SaveLain},
     props: {
         label: {
             type: String,
@@ -39,7 +43,8 @@ export default {
             default() {
                 return {
                     src: '',
-                    text: ''
+                    text: '',
+                    id: ''
                 }
             }
         },
@@ -49,6 +54,18 @@ export default {
                 return []
             }
         },
+        lainList: {
+            type: Array,
+            default: () => []
+        },
+        placeholder: {
+            type: String,
+            default: '请输入话术内容'
+        },
+        isRequired: {
+            type: Boolean,
+            default: false
+        },
         baseUrl: String
     },
     data() {
@@ -56,27 +73,41 @@ export default {
             conPos: 0,
             node: {
                 src: '',
-                text: ''
+                text: '',
+                id: ''
             },
-            audioSrc: ''
+            audioSrc: '',
+            openTts: 1,
+            rules: {
+                text: {required: true, message: `${this.label}不能为空`, trigger: 'blur'}
+            }
         }
     },
     watch: {
         'form.src'(newVal) {
             this.node.src = newVal
             this.getSrc(newVal)
+            this.$refs.textForm.clearValidate()
         },
         'form.text'(newVal) {
             this.node.text = newVal
+        },
+        'form.id'(newVal) {
+            this.node.id = newVal
         }
     },
     created() {
         this.node = Object.assign({}, this.form)
         this.getSrc(this.node.src)
+        this.initForm()
     },
     methods: {
+        initForm() {
+            const userInfo = JSON.parse(localStorage.userInfo)
+            this.openTts = userInfo.openTts ?? 1
+        },
         getSrc(src) {
-            this.audioSrc = `${this.baseUrl}/obc/api/file/download/${src}?token=${localStorage.flowToken}`
+            this.audioSrc = `${this.baseUrl}/file/download/${src}?token=${localStorage.token}`
         },
         // 获取内容中鼠标的位置
         getConPos(e) {
@@ -110,6 +141,17 @@ export default {
                 this.$message.success('上传成功')
             })
         },
+        getAudio(data) {
+            this.node.src = data.path
+            this.getSrc(data.path)
+            this.$emit('getAudio', {
+                src: data.path,
+                id: data.id
+            })
+        },
+        getLainId(id) {
+            this.$emit('getLainId', id)
+        },
         // 上传文件成功
         uploadSuccess(file) {
             // this.readerAudio(file)
@@ -123,6 +165,7 @@ export default {
                 type: 'warning'
             }).then(() => {
                 this.node.src = null
+                this.node.id = ''
                 this.$emit('delAudio')
                 this.$message.success('已删除')
             }).catch(() => {
@@ -134,6 +177,18 @@ export default {
         },
         textChange() {
             this.$emit('changeText', this.node.text)
+        },
+        validateForm() {
+            let flag = null
+            this.$refs.textForm.validate(valid => {
+                if (valid) {
+                    flag = true
+                    this.$refs.textForm.clearValidate()
+                } else {
+                    flag = false
+                }
+            })
+            return flag
         }
     }
 }
