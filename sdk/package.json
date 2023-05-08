@@ -1,6 +1,6 @@
 {
     "name": "weihu-flow-sdk",
-    "version": "1.0.12",
+    "version": "1.0.13",
     "main": "./flowSdk.umd.min.js",
     "license": "MIT"
 }
