@@ -67,6 +67,7 @@
                     :lain-list="lainList"
                     :ivrList="ivrList"
                     :baseUrl="baseUrl"
+                    :callerList="callerList"
                     @setLineLabel="setLineLabel"
                     @repaintEverything="repaintEverything"
                 />
@@ -347,7 +348,7 @@
     import ScriptContent from './script_content'
     import { creatIvr, editIvr, getIvrData } from '@/api/ivrManage'
     import { cloneDeep, findLastIndex, assign, merge } from 'lodash'
-    import { getGatewayGroupId, getSkills, getParamType, getTimbre, getTemList, getLainList, getIvrList } from '@/api/common'
+    import { getGatewayGroupId, getSkills, getParamType, getTimbre, getTemList, getLainList, getIvrList, getCallerList } from '@/api/common'
     import AuditionTimbre from './AuditionTimbre'
     export default {
         props: {
@@ -448,7 +449,11 @@
                     urk: '',
                     urn: '',
                     bridgeType: 'robot',
-                    bridgeId: ''
+                    bridgeId: '',
+                    caller: '',
+                    called: '',
+                    callerValue: '',
+                    calledValue: ''
                 },
                 // 判断节点
                 judgeNode: {
@@ -565,7 +570,8 @@
                 nodeName: '',
                 timbres: [],
                 lainList: [],
-                openTts: 1
+                openTts: 1,
+                callerList: []
             }
         },
         // 一些基础配置移动该文件中
@@ -710,6 +716,7 @@
             this.getNotice()
             this.getParamType()
             this.getLainData()
+            this.getCallerList()
             if (this.id) {
                 this.renderIvr()
             } else {
@@ -779,6 +786,11 @@
                     companyId: localStorage.companyId
                 }).then(res => {
                     if (res.data) this.noticeList = res.data
+                })
+            },
+            getCallerList() {
+                getCallerList(this.baseUrl, localStorage.companyId).then(res => {
+                    this.callerList = res.data ?? []
                 })
             },
             formatTooltip(val) {
@@ -1583,7 +1595,15 @@
                     })
                 }
                 for (let item of flowData.nodeList) {
-                    if (item.type !== 'root') item = Object.assign({}, this.initNode, item)
+                    if (item.type !== 'root') {
+                        if (item.type !== 'start' && item.type !== 'end'
+                            && item.type !== 'keyInteraction' && item.type !== 'moreTalk'
+                        ) {
+                            item = Object.assign({}, this.nodeField(this.initNode, item), item)
+                        } else {
+                            item = Object.assign({}, this.initNode, item)
+                        }
+                    }
                     list.push(item)
                 }
                 flowData.nodeList = list

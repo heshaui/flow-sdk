@@ -259,6 +259,56 @@
                 />
             </el-select>
         </el-form-item>
+        <el-row v-show="form.bridgeType === 'gw'">
+            <el-col :span="12">
+                <el-form-item label="主叫号码">
+                    <el-select
+                        v-model="form.caller"
+                        filterable
+                        placeholder="选择主叫"
+                        style="width: 100%;"
+                        @change="form.callerValue = ''"
+                    >
+                        <el-option label="自定义" value="" />
+                        <el-option
+                            v-for="(v, key) in callerList"
+                            :key="key"
+                            :label="v.caller"
+                            :value="v.caller"
+                        />
+                    </el-select>
+                </el-form-item>
+            </el-col>
+            <el-col :span="12">
+                <el-form-item>
+                    <el-input v-model="form.callerValue" placeholder="请输入主叫" :disabled="form.caller !== ''" />
+                </el-form-item>
+            </el-col>
+            <el-col :span="12">
+                <el-form-item label="被叫号码">
+                    <el-select
+                        v-model="form.called"
+                        filterable
+                        placeholder="选择被叫"
+                        style="width: 100%;"
+                        @change="form.calledValue = ''"
+                    >
+                        <el-option label="自定义" value="" />
+                        <el-option
+                            v-for="(v, key) in callerList"
+                            :key="key"
+                            :label="v.caller"
+                            :value="v.caller"
+                        />
+                    </el-select>
+                </el-form-item>
+            </el-col>
+            <el-col :span="12">
+                <el-form-item>
+                    <el-input v-model="form.calledValue" placeholder="请输入被叫" :disabled="form.called !== ''" />
+                </el-form-item>
+            </el-col>
+        </el-row>
         <script-content
             v-if="form.bridgeType === 'playAndHangUp'"
             ref="textChild"
@@ -337,6 +387,10 @@ export default {
             type: Array,
             default: () => []
         },
+        callerList: {
+            type: Array,
+            default: () => []
+        },
         ruleList: Array,
         formData: Object,
         rowIndex: [Number, String],
@@ -368,7 +422,11 @@ export default {
                 provinceName: '',
                 cityName: '',
                 targetName: '',
-                targetId: ''
+                targetId: '',
+                called: '',
+                caller: '',
+                callerValue: '',
+                calledValue: ''
             }
         };
     },
@@ -491,6 +549,8 @@ export default {
                     this.getSeatsList(this.form.bridgeId, true)
                 }
                 if (this.form.provinceName) this.provinceChange(this.form.provinceName, true)
+                if (this.form.callerValue) this.form.caller = ''
+                if (this.form.calledValue) this.form.called = ''
             }
         },
         onClose() {
@@ -537,6 +597,12 @@ export default {
                         if (target) {
                             this.form.targetName = target.agentName;
                         }
+                    }
+                    if (this.form.caller === '' && this.form.callerValue) {
+                        this.form.caller = this.form.callerValue
+                    }
+                    if (this.form.called === '' && this.form.calledValue) {
+                        this.form.called = this.form.calledValue
                     }
                     this.$message.success("保存成功");
                     this.$emit("onSave", this.form);

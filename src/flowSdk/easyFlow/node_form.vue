@@ -81,6 +81,56 @@
                                 <p v-show="node.ruleType === 'ascriptionPlaceRule'" class="pTip">系统会根据设定归属地对应的转接类型进行转接，未涉及归属地则会选用默认转接类型。</p>
                                 <p v-show="node.ruleType === 'urlRule'" class="pTip">系统会根据接口返回值，转接对应的转接类型，返回失败则会选用默认转接目标。</p>
                                 <p v-show="node.ruleType === 'ivrParamsRule'" class="pTip">系统根据变量信息中的值设定的转接类型进行转接，未涉及字段和值则会选用默认转接类型。</p>
+                                <el-row v-if="node.bridgeType === 'gw'" :gutter="10">
+                                    <el-col :span="12">
+                                        <el-form-item label="主叫号码" label-width="96px">
+                                            <el-select
+                                                v-model="node.caller"
+                                                filterable
+                                                placeholder="选择主叫"
+                                                style="width: 100%;"
+                                                @change="node.callerValue = ''"
+                                            >
+                                                <el-option label="自定义" value="" />
+                                                <el-option
+                                                    v-for="(v, key) in callerList"
+                                                    :key="key"
+                                                    :label="v.caller"
+                                                    :value="v.caller"
+                                                />
+                                            </el-select>
+                                        </el-form-item>
+                                    </el-col>
+                                    <el-col :span="12">
+                                        <el-form-item>
+                                            <el-input v-model="node.callerValue" placeholder="请输入主叫" :disabled="node.caller !== ''" />
+                                        </el-form-item>
+                                    </el-col>
+                                    <el-col :span="12">
+                                        <el-form-item label="被叫号码" label-width="96px">
+                                            <el-select
+                                                v-model="node.called"
+                                                filterable
+                                                placeholder="选择被叫"
+                                                style="width: 100%;"
+                                                @change="node.calledValue = ''"
+                                            >
+                                                <el-option label="自定义" value="" />
+                                                <el-option
+                                                    v-for="(v, key) in callerList"
+                                                    :key="key"
+                                                    :label="v.caller"
+                                                    :value="v.caller"
+                                                />
+                                            </el-select>
+                                        </el-form-item>
+                                    </el-col>
+                                    <el-col :span="12">
+                                        <el-form-item>
+                                            <el-input v-model="node.calledValue" placeholder="请输入被叫" :disabled="node.called !== ''" />
+                                        </el-form-item>
+                                    </el-col>
+                                </el-row>
                             </div>
                             <!-- 留言 -->
                             <div v-if="node.type === 'leaveMsg'">
@@ -172,6 +222,7 @@
                                     :baseUrl="baseUrl"
                                     :ivrList="ivrList"
                                     :type="node.ruleType"
+                                    :callerList="callerList"
                                     :receiveCodes="receiveCodes"
                                     @getRuleList="list => node.ruleList = list"
                                 />
@@ -524,6 +575,10 @@
                 type: Array,
                 default: () => []
             },
+            callerList: {
+                type: Array,
+                default: () => []
+            },
             baseUrl: String
         },
         data() {
@@ -654,6 +709,8 @@
                 data.nodeList.filter((node) => {
                     if (node.id === id) {
                         this.node = cloneDeep(node)
+                        if (this.node.callerValue) this.node.caller = ''
+                        if (this.node.calledValue) this.node.called = ''
                         this.$set(this.node, 'outputParamInfo', this.node.outputParamInfo?.length ?  this.node.outputParamInfo : this.node.type==='infoCollection' || (this.node.type==='transfer' && this.node.ruleType === 'urlRule') ? [
                             { name: '接口出参',  variable: 'result', value: '', id: new Date().getTime()}
                         ]: [])
@@ -997,6 +1054,16 @@
                                 node.urk = this.node.urk
                                 node.apiUrl =  this.node.apiUrl
                                 node.inputParamInfo = cloneDeep(this.node.inputParamInfo)
+                                node.caller = this.node.caller
+                                node.called = this.node.called
+                                node.callerValue = this.node.callerValue
+                                node.calledValue = this.node.calledValue
+                                if (this.node.caller === '' && this.node.callerValue) {
+                                    node.caller = this.node.callerValue
+                                }
+                                if (this.node.called === '' && this.node.calledValue) {
+                                    node.called = this.node.calledValue
+                                }
                                 break
                             case 'judge': node.judgmentInfo = cloneDeep(this.initJudge('stringify')); break
                             case 'yunDa':

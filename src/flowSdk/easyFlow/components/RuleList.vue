@@ -38,6 +38,7 @@
                 :rowIndex="rowIndex"
                 :receiveCodes="receiveCodes"
                 :baseUrl="baseUrl"
+                v-bind="$attrs"
                 @onClose="detailDialog = false"
                 @onSave="onSave"
             />
