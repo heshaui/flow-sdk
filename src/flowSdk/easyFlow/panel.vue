@@ -809,6 +809,8 @@
                     this.jsPlumb.setSuspendDrawing(false, true);
                     // 初始化节点
                     this.loadEasyFlow()
+                    // 存放当前点击的连线
+                    let selLine = null
                     // 单点击了连接线, https://www.cnblogs.com/ysx215/p/7615677.html
                     this.jsPlumb.bind('click', (conn, originalEvent) => {
                         const mark = this.$refs.nodeForm.lineInit({
@@ -822,30 +824,47 @@
                         this.activeElement.sourceId = conn.sourceId
                         this.activeElement.targetId = conn.targetId
                         console.log('click line')
-                        // this.$refs.nodeForm.lineInit({
-                        //     from: conn.sourceId,
-                        //     to: conn.targetId,
-                        //     label: conn.getLabel()
-                        // }, this.data)
-
+                        if (selLine && selLine.id !== conn.id) {
+                            selLine.setPaintStyle({stroke: '#E0E3E7'})
+                        }
+                        conn.setPaintStyle({stroke: '#409eff'})
+                        selLine = conn
                     })
+                    // 连线恢复默认颜色
+                    document.onclick = event => {
+                        if (selLine && !event.target.classList.contains('jtk-connector-outline')) {
+                            selLine.setPaintStyle({stroke: '#E0E3E7'})
+                            selLine = null
+                        }
+                    }
                     // 连线
                     this.jsPlumb.bind("connection", (evt) => {
+                        console.log('建立连线')
                         let from = evt.source.id
                         let to = evt.target.id
+                        let label = evt.connection.getLabel() ?? ''
                         if (this.loadEasyFlowFinish) {
-                            this.data.lineList.push({from: from, to: to})
+                            if (label) {
+                                this.data.lineList.push({from: from, to: to, label: label})
+                            } else {
+                                this.data.lineList.push({from: from, to: to})
+                            }
                         }
                     })
 
                     // 删除连线回调
-                    this.jsPlumb.bind("connectionDetached", (evt) => {
-                        this.deleteLine(evt.sourceId, evt.targetId)
-                    })
-
-                    // 改变线的连接节点
-                    this.jsPlumb.bind("connectionMoved", (evt) => {
-                        this.changeLine(evt.originalSourceId, evt.originalTargetId)
+                    this.jsPlumb.bind("connectionDetached", info => {
+                        console.log('删除连线', info)
+                        this.deleteLine(info.sourceId, info.targetId)
+                        if (!this.isDragDel) return
+                        console.log('删除后恢复连线', info)
+                        var connParam = {
+                            source: info.source.id,
+                            target: info.target.id,
+                            label: info.connection.getLabel() ?? ''
+                        }
+                        this.jsPlumb.connect(connParam, this.jsplumbConnectOptions)
+                        this.isDragDel = false
                     })
 
                     // 连线右击
@@ -862,14 +881,23 @@
 
                     // 连线
                     this.jsPlumb.bind("beforeDrop", (evt) => {
+                        console.log('连线建立前')
                         let from = evt.sourceId
                         let to = evt.targetId
-                        // if (from === to) {
-                        //     this.$message.error('节点不支持连接自己')
-                        //     return false
-                        // }
+                        if (from === to && from === '0' ) {
+                            // this.$message.error('节点不支持连接自己')
+                            return false
+                        }
+                        if (to === '0') {
+                            this.$message.error('连线不可指向开始节点')
+                            return false
+                        }
                         if (this.hasLine(from, to)) {
                             this.$message.error('该关系已存在,不允许重复创建')
+                            return false
+                        }
+                        if (this.hasRootLine(from) && !this.isDragDel) {
+                            this.$message.error('开始节点只能有一条指向下级的连线')
                             return false
                         }
                         // if (this.hashOppositeLine(from, to)) {
@@ -880,9 +908,21 @@
                         return true
                     })
 
-                    // beforeDetach
-                    this.jsPlumb.bind("beforeDetach", (evt) => {
-                        console.log('beforeDetach', evt)
+                    // 连线改变节点
+                    this.jsPlumb.bind("connectionMoved", (info) => {
+                        console.log('改变节点', info)
+                        this.deleteLine(info.originalSourceId, info.originalTargetId)
+                    })
+
+                    // 开始拖动
+                    this.jsPlumb.bind("connectionDrag", (conn) => {
+                        console.log('开始拖动', conn.sourceId, conn.targetId)
+                        if (!conn.targetId.includes('jsPlumb')) this.isDragDel = true
+                    })
+                    // 停止拖动
+                    this.jsPlumb.bind('connectionDragStop', conn => {
+                        console.log('停止拖动', conn.sourceId, conn.targetId)
+                        this.isDragDel = false
                     })
                     this.jsPlumb.setContainer(this.$refs.efContainer)
                 })
@@ -916,6 +956,8 @@
                         connector: line.connector ? line.connector : '',
                         anchors: line.anchors ? line.anchors : undefined,
                         paintStyle: line.paintStyle ? line.paintStyle : undefined,
+                        detachable: true,
+                        reattach: true
                     }
                     this.jsPlumb.connect(connParam, this.jsplumbConnectOptions)
                 }
