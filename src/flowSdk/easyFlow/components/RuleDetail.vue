@@ -263,13 +263,14 @@
             <el-col :span="12">
                 <el-form-item label="主叫号码">
                     <el-select
-                        v-model="form.caller"
+                        v-model="form.callerType"
                         filterable
                         placeholder="选择主叫"
                         style="width: 100%;"
-                        @change="form.callerValue = ''"
+                        @change="onTypeChange($event, 'caller')"
                     >
-                        <el-option label="自定义" value="" />
+                        <el-option label="客户号码" value="custom" />
+                        <el-option label="自定义" value="auto" />
                         <el-option
                             v-for="(v, key) in callerList"
                             :key="key"
@@ -280,20 +281,21 @@
                 </el-form-item>
             </el-col>
             <el-col :span="12">
-                <el-form-item>
-                    <el-input v-model="form.callerValue" placeholder="请输入主叫" :disabled="form.caller !== ''" />
+                <el-form-item prop="caller">
+                    <el-input v-model="form.caller" placeholder="请输入主叫" :disabled="form.callerType !== 'auto'" />
                 </el-form-item>
             </el-col>
             <el-col :span="12">
                 <el-form-item label="被叫号码">
                     <el-select
-                        v-model="form.called"
+                        v-model="form.calledType"
                         filterable
                         placeholder="选择被叫"
                         style="width: 100%;"
-                        @change="form.calledValue = ''"
+                        @change="onTypeChange($event, 'called')"
                     >
-                        <el-option label="自定义" value="" />
+                        <el-option label="客户号码" value="custom" />
+                        <el-option label="自定义" value="auto" />
                         <el-option
                             v-for="(v, key) in callerList"
                             :key="key"
@@ -304,8 +306,8 @@
                 </el-form-item>
             </el-col>
             <el-col :span="12">
-                <el-form-item>
-                    <el-input v-model="form.calledValue" placeholder="请输入被叫" :disabled="form.called !== ''" />
+                <el-form-item prop="called">
+                    <el-input v-model="form.called" placeholder="请输入被叫" :disabled="form.calledType !== 'auto'" />
                 </el-form-item>
             </el-col>
         </el-row>
@@ -425,8 +427,8 @@ export default {
                 targetId: '',
                 called: '',
                 caller: '',
-                callerValue: '',
-                calledValue: ''
+                callerType: 'auto',
+                calledType: 'auto'
             }
         };
     },
@@ -449,7 +451,9 @@ export default {
                     trigger: "change"
                 },
                 provinceName: this.form.areaType === 0 ? {required: true,message: "请选择省",trigger: "change"} : {},
-                cityName: this.form.areaType === 1 && !this.form.provinceName.includes('市') ? {required: true,message: "请选择市",trigger: "change"} : {}
+                cityName: this.form.areaType === 1 && !this.form.provinceName.includes('市') ? {required: true,message: "请选择市",trigger: "change"} : {},
+                caller: this.form.callerType === 'auto' ? { required: true, message: '请输入主叫号码', trigger: 'blur'} : {},
+                called: this.form.calledType === 'auto' ? { required: true, message: '请输入被叫号码', trigger: 'blur'} : {}
             }
         }
     },
@@ -549,8 +553,6 @@ export default {
                     this.getSeatsList(this.form.bridgeId, true)
                 }
                 if (this.form.provinceName) this.provinceChange(this.form.provinceName, true)
-                if (this.form.callerValue) this.form.caller = ''
-                if (this.form.calledValue) this.form.called = ''
             }
         },
         onClose() {
@@ -598,12 +600,6 @@ export default {
                             this.form.targetName = target.agentName;
                         }
                     }
-                    if (this.form.caller === '' && this.form.callerValue) {
-                        this.form.caller = this.form.callerValue
-                    }
-                    if (this.form.called === '' && this.form.calledValue) {
-                        this.form.called = this.form.calledValue
-                    }
                     this.$message.success("保存成功");
                     this.$emit("onSave", this.form);
                     this.loading = false;
@@ -624,6 +620,14 @@ export default {
                     this.seatsList = res.data;
                 }
             })
+        },
+        // 主叫/被叫类型change事件
+        onTypeChange(val, type) {
+            if (val !== 'custom' && val !== 'auto') {
+                this.form[type] = val
+            } else if (val === 'custom') {
+                this.form[type] = ''
+            }
         }
     }
 };

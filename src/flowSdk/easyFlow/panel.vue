@@ -452,8 +452,8 @@
                     bridgeId: '',
                     caller: '',
                     called: '',
-                    callerValue: '',
-                    calledValue: ''
+                    callerType: 'auto',
+                    calledType: 'auto'
                 },
                 // 判断节点
                 judgeNode: {

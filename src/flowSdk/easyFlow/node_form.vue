@@ -5,7 +5,7 @@
                 编辑
             </div>
             <div class="ef-node-form-body">
-                <el-form :model="node" ref="dataForm" :rules="dataRules" v-show="type === 'node'">
+                <el-form :model="node" ref="dataForm" :rules="nodeRules" v-show="type === 'node'">
                     <el-tabs v-model="activeName">
                         <el-tab-pane label="节点信息设置" name="first">
                             <el-form-item label="节点名称" prop="name" label-width="80px">
@@ -85,13 +85,14 @@
                                     <el-col :span="12">
                                         <el-form-item label="主叫号码" label-width="96px">
                                             <el-select
-                                                v-model="node.caller"
+                                                v-model="node.callerType"
                                                 filterable
                                                 placeholder="选择主叫"
                                                 style="width: 100%;"
-                                                @change="node.callerValue = ''"
+                                                @change="onTypeChange($event, 'caller')"
                                             >
-                                                <el-option label="自定义" value="" />
+                                                <el-option label="客户号码" value="custom" />
+                                                <el-option label="自定义" value="auto" />
                                                 <el-option
                                                     v-for="(v, key) in callerList"
                                                     :key="key"
@@ -102,20 +103,21 @@
                                         </el-form-item>
                                     </el-col>
                                     <el-col :span="12">
-                                        <el-form-item>
-                                            <el-input v-model="node.callerValue" placeholder="请输入主叫" :disabled="node.caller !== ''" />
+                                        <el-form-item prop="caller">
+                                            <el-input v-model="node.caller" placeholder="请输入主叫" :disabled="node.callerType !== 'auto'" />
                                         </el-form-item>
                                     </el-col>
                                     <el-col :span="12">
                                         <el-form-item label="被叫号码" label-width="96px">
                                             <el-select
-                                                v-model="node.called"
+                                                v-model="node.calledType"
                                                 filterable
                                                 placeholder="选择被叫"
                                                 style="width: 100%;"
-                                                @change="node.calledValue = ''"
+                                                @change="onTypeChange($event, 'called')"
                                             >
-                                                <el-option label="自定义" value="" />
+                                                <el-option label="客户号码" value="custom" />
+                                                <el-option label="自定义" value="auto" />
                                                 <el-option
                                                     v-for="(v, key) in callerList"
                                                     :key="key"
@@ -126,8 +128,8 @@
                                         </el-form-item>
                                     </el-col>
                                     <el-col :span="12">
-                                        <el-form-item>
-                                            <el-input v-model="node.calledValue" placeholder="请输入被叫" :disabled="node.called !== ''" />
+                                        <el-form-item prop="called">
+                                            <el-input v-model="node.called" placeholder="请输入被叫" :disabled="node.calledType !== 'auto'" />
                                         </el-form-item>
                                     </el-col>
                                 </el-row>
@@ -651,6 +653,15 @@
                 deep: true
             }
         },
+        computed: {
+            nodeRules() {
+                return {
+                    ...this.dataRules,
+                    caller: this.node.callerType === 'auto' ? { required: true, message: '请输入主叫号码', trigger: 'blur'} : {},
+                    called: this.node.calledType === 'auto' ? { required: true, message: '请输入被叫号码', trigger: 'blur'} : {}
+                }
+            }
+        },
         mounted() {
             if (this.nodeData) this.data = this.nodeData
             this.initForm()
@@ -709,8 +720,6 @@
                 data.nodeList.filter((node) => {
                     if (node.id === id) {
                         this.node = cloneDeep(node)
-                        if (this.node.callerValue) this.node.caller = ''
-                        if (this.node.calledValue) this.node.called = ''
                         this.$set(this.node, 'outputParamInfo', this.node.outputParamInfo?.length ?  this.node.outputParamInfo : this.node.type==='infoCollection' || (this.node.type==='transfer' && this.node.ruleType === 'urlRule') ? [
                             { name: '接口出参',  variable: 'result', value: '', id: new Date().getTime()}
                         ]: [])
@@ -1056,14 +1065,8 @@
                                 node.inputParamInfo = cloneDeep(this.node.inputParamInfo)
                                 node.caller = this.node.caller
                                 node.called = this.node.called
-                                node.callerValue = this.node.callerValue
-                                node.calledValue = this.node.calledValue
-                                if (this.node.caller === '' && this.node.callerValue) {
-                                    node.caller = this.node.callerValue
-                                }
-                                if (this.node.called === '' && this.node.calledValue) {
-                                    node.called = this.node.calledValue
-                                }
+                                node.callerType = this.node.callerType
+                                node.calledType = this.node.calledType
                                 break
                             case 'judge': node.judgmentInfo = cloneDeep(this.initJudge('stringify')); break
                             case 'yunDa':
@@ -1105,6 +1108,14 @@
             deleteJudgeBasis(type, index) {
                 const conditions = this.node.judgmentInfo.content[type].conditions
                 conditions.splice(index-1, 2)
+            },
+            // 主叫/被叫类型change事件
+            onTypeChange(val, type) {
+                if (val !== 'custom' && val !== 'auto') {
+                    this.node[type] = val
+                } else if (val === 'custom') {
+                    this.node[type] = ''
+                }
             }
         }
     }
