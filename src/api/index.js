@@ -6,3 +6,5 @@ const api = axios.create({
 })
 
 export default apiConfig(api)
+
+export const baseUrl_default = 'http://192.168.0.187:8084'

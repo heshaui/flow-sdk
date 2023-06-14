@@ -1,6 +1,5 @@
-import api from './index'
+import api, { baseUrl_default } from './index'
 import qs from 'qs'
-const baseUrl_default = 'http://192.168.0.187:8084'
 
 // 获取企业列表
 export function getCompanyList(baseUrl) {

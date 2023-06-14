@@ -259,7 +259,7 @@
                 />
             </el-select>
         </el-form-item>
-        <el-row v-show="form.bridgeType === 'gw'">
+        <el-row v-if="form.bridgeType === 'gw'">
             <el-col :span="12">
                 <el-form-item label="主叫号码">
                     <el-select

@@ -1,6 +1,5 @@
 // ivr管理服务
-import api from './index'
-const baseUrl_default = 'http://192.168.0.187:8084'
+import api, { baseUrl_default } from './index'
 
 // 获取企业列表
 export function getIvrList(baseUrl, params) {
