@@ -70,6 +70,7 @@ class JsSDK {
     }
     if (!options.authType) options.authType = 'default'
     this.options = Object.assign({}, options);
+    this.options.baseUrl = this.options.baseUrl ?? 'https://cc.v-call.cn'
     this.callback = callback
     switch (options.authType) {
       case 'login': JsSDK.onlogin(); break
