@@ -139,7 +139,7 @@
                     form.bridgeName = '';
                 "
             >
-                <el-option label="机器人" value="robot" />
+                <!-- <el-option label="机器人" value="robot" /> -->
                 <el-option label="语音通知" value="notice" />
                 <el-option label="技能组" value="group" />
                 <el-option label="网关组" value="gw" />

@@ -110,7 +110,7 @@
                         </el-form-item>
                         <el-form-item v-show="flowForm.keyErrorEvent === 'TRANSFER_STRATEGY'" label="转接类型" label-width="110px">
                             <el-select v-model="flowForm.eventTransferType" @change="flowForm.eventTransferBusinessId=''">
-                                <el-option label="机器人" value="robot" />
+                                <!-- <el-option label="机器人" value="robot" /> -->
                                 <el-option label="语音通知" value="notice" />
                                 <el-option label="技能组" value="group" />
                                 <el-option label="网关组" value="gw" />
@@ -448,7 +448,7 @@
                     ruleList: [],
                     urk: '',
                     urn: '',
-                    bridgeType: 'robot',
+                    bridgeType: 'group',
                     bridgeId: '',
                     caller: '',
                     called: '',
@@ -514,7 +514,7 @@
                     // noRespEvent: 0,
                     params: [],
                     auditionContent: '您好，这里是音色试听，您好，这里是音色试听',
-                    eventTransferType: 'robot',
+                    eventTransferType: 'group',
                     eventTransferBusinessId: ''
                 },
                 titDialog: false,
@@ -818,7 +818,7 @@
                             to: conn.targetId,
                             label: conn.getLabel()
                         }, this.data)
-                        this.rightOpen = true
+                        this.rightOpen = !this.hasRootLine(conn.sourceId)
                         if (!mark) return false
                         this.activeElement.type = 'line'
                         this.activeElement.sourceId = conn.sourceId

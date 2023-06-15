@@ -44,7 +44,7 @@
                                     <el-col :span="12">
                                         <el-form-item label="默认转接类型" label-width="96px">
                                             <el-select v-model="node.bridgeType" style="width: 100%;" @change="node.bridgeId=''">
-                                                <el-option label="机器人" value="robot" />
+                                                <!-- <el-option label="机器人" value="robot" /> -->
                                                 <el-option label="语音通知" value="notice" />
                                                 <el-option label="技能组" value="group" />
                                                 <el-option label="网关组" value="gw" />
